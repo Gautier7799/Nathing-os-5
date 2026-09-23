@@ -39,8 +39,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
   private val context: Context get() = getApplication<Application>().applicationContext
 
-  // Screen navigation
-  private val _currentScreen = MutableStateFlow(LauncherScreen.HOME)
+  // Screen navigation - Starts with Nothing OS 5 Lock Screen when enabled
+  private val _currentScreen = MutableStateFlow(
+    if (LauncherSettings().lockScreen.isLockScreenEnabled) LauncherScreen.LOCK_SCREEN else LauncherScreen.HOME
+  )
   val currentScreen: StateFlow<LauncherScreen> = _currentScreen.asStateFlow()
 
   // App lists
@@ -374,17 +376,83 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
   }
 
+  fun movePinnedApp(fromIndex: Int, toIndex: Int) {
+    _pinnedApps.update { list ->
+      if (fromIndex in list.indices && toIndex in list.indices && fromIndex != toIndex) {
+        val mutable = list.toMutableList()
+        val item = mutable.removeAt(fromIndex)
+        mutable.add(toIndex, item)
+        mutable
+      } else {
+        list
+      }
+    }
+  }
+
+  fun removePinnedApp(app: AppItem) {
+    _pinnedApps.update { list ->
+      list.filterNot { it.packageName == app.packageName }
+    }
+  }
+
   fun launchApp(app: AppItem) {
+    var launched = false
     try {
       val pm = context.packageManager
       val intent = pm.getLaunchIntentForPackage(app.packageName)
       if (intent != null) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
+        launched = true
       }
     } catch (_: Exception) {
-      // Graceful catch for sandbox/preview
+      // Intent launch failed, try fallback actions
     }
+
+    if (!launched) {
+      try {
+        val pkg = app.packageName.lowercase(Locale.ROOT)
+        val label = app.label.lowercase(Locale.ROOT)
+        val fallbackIntent = when {
+          pkg.contains("dialer") || pkg.contains("phone") || label.contains("phone") ->
+            Intent(Intent.ACTION_DIAL).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+          pkg.contains("chrome") || pkg.contains("browser") || label.contains("chrome") || label.contains("browser") ->
+            Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://google.com")).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+          pkg.contains("messaging") || pkg.contains("mms") || label.contains("message") ->
+            Intent(Intent.ACTION_MAIN).apply {
+              addCategory(Intent.CATEGORY_APP_MESSAGING)
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+          pkg.contains("camera") || label.contains("camera") ->
+            Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+          pkg.contains("settings") || label.contains("setting") ->
+            Intent(android.provider.Settings.ACTION_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+          pkg.contains("calculator") || label.contains("calc") ->
+            Intent().apply {
+              action = Intent.ACTION_MAIN
+              addCategory(Intent.CATEGORY_APP_CALCULATOR)
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+          pkg.contains("calendar") || label.contains("calendar") ->
+            Intent(Intent.ACTION_MAIN).apply {
+              addCategory(Intent.CATEGORY_APP_CALENDAR)
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+          pkg.contains("clock") || label.contains("clock") ->
+            Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+          else -> null
+        }
+        if (fallbackIntent != null) {
+          context.startActivity(fallbackIntent)
+          launched = true
+        }
+      } catch (_: Exception) {
+        // Fallback intent not handled
+      }
+    }
+
+    // Always give feedback so user knows the click succeeded immediately
+    android.widget.Toast.makeText(context, "Nothing OS: ${app.label}", android.widget.Toast.LENGTH_SHORT).show()
   }
 
   fun openAppInfo(app: AppItem) {

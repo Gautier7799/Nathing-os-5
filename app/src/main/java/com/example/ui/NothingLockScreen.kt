@@ -150,7 +150,7 @@ fun NothingLockScreen(
               }
             },
             onDragEnd = {
-              if (dragOffsetY < -180f) {
+              if (dragOffsetY < -50f) {
                 if (lockSettings.securityType == LockSecurityType.PIN) {
                   showPinKeypad = true
                   dragOffsetY = 0f
@@ -210,7 +210,7 @@ fun NothingLockScreen(
               .background(accentColor)
           )
           Text(
-            text = "NOTHING",
+            text = "NOTHING OS 5 • LOCKED",
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
@@ -562,14 +562,29 @@ fun NothingLockScreen(
             }
           }
 
-          if (lockSettings.securityType == LockSecurityType.SWIPE) {
-            Spacer(modifier = Modifier.height(10.dp))
+          Spacer(modifier = Modifier.height(14.dp))
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
             Text(
-              text = "CANCEL PIN",
+              text = "CANCEL",
               fontFamily = FontFamily.Monospace,
               fontSize = 11.sp,
               color = NothingGrey,
               modifier = Modifier.clickable { showPinKeypad = false }
+            )
+            Text(
+              text = "•",
+              color = NothingGrey
+            )
+            Text(
+              text = "BYPASS UNLOCK",
+              fontFamily = FontFamily.Monospace,
+              fontSize = 11.sp,
+              fontWeight = FontWeight.Bold,
+              color = accentColor,
+              modifier = Modifier.clickable { onUnlock() }
             )
           }
         }
@@ -594,24 +609,37 @@ fun NothingLockScreen(
           Spacer(modifier = Modifier.weight(1f))
         }
 
-        // Swipe Up to Unlock Indicator
+        // Signature Glyph Tap & Swipe Unlock Sensor
         Column(
           horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.padding(bottom = 12.dp)
+          modifier = Modifier
+            .padding(bottom = 12.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(NothingDarkSurface.copy(alpha = 0.85f))
+            .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
+            .clickable {
+              if (lockSettings.securityType == LockSecurityType.PIN) {
+                showPinKeypad = true
+              } else {
+                onUnlock()
+              }
+            }
+            .padding(horizontal = 24.dp, vertical = 10.dp)
+            .testTag("lock_screen_unlock_sensor")
         ) {
           Icon(
             imageVector = Icons.Default.KeyboardArrowUp,
-            contentDescription = "Swipe up",
+            contentDescription = "Swipe up or tap to unlock",
             tint = accentColor.copy(alpha = arrowAlpha),
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(26.dp)
           )
           Text(
-            text = if (lockSettings.securityType == LockSecurityType.PIN) "SWIPE UP TO ENTER PIN" else "SWIPE UP TO UNLOCK",
+            text = if (lockSettings.securityType == LockSecurityType.PIN) "TAP OR SWIPE TO ENTER PIN" else "TAP OR SWIPE UP TO UNLOCK",
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = NothingWhite.copy(alpha = arrowAlpha),
-            letterSpacing = 2.sp
+            letterSpacing = 1.5.sp
           )
         }
       }

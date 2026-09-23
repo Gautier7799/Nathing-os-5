@@ -1,7 +1,11 @@
 package com.example.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -12,36 +16,45 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import com.example.model.AppItem
 import com.example.model.AudioState
 import com.example.model.FitnessStats
@@ -61,6 +74,9 @@ import com.example.ui.components.NothingResourceWidget
 import com.example.ui.components.NothingStepWidget
 import com.example.ui.components.NothingWeatherWidget
 import com.example.ui.theme.NothingBlack
+import com.example.ui.theme.NothingBorder
+import com.example.ui.theme.NothingDarkSurface
+import com.example.ui.theme.NothingElevated
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingWhite
 
@@ -93,49 +109,37 @@ fun HomeScreen(
   onOpenSettings: () -> Unit,
   onSwipeDown: () -> Unit = {},
   onDoubleTap: () -> Unit = {},
+  onReorderPinnedApps: (Int, Int) -> Unit = { _, _ -> },
+  onRemovePinnedApp: (AppItem) -> Unit = {},
+  onToggleDockApp: (AppItem) -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val accentColor = remember(settings.accentColorIndex) {
     ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
   }
 
-  var dragOffsetY by remember { mutableFloatStateOf(0f) }
+  var isReorderingFavorites by remember { mutableStateOf(false) }
 
   Box(
     modifier = modifier
       .fillMaxSize()
       .background(NothingBlack)
-      .pointerInput(settings.doubleTapToSleep) {
-        if (settings.doubleTapToSleep) {
-          detectTapGestures(
-            onDoubleTap = { onDoubleTap() }
-          )
-        }
-      }
-      .pointerInput(settings.swipeDownNotifications) {
-        detectVerticalDragGestures(
-          onVerticalDrag = { _, dragAmount ->
-            dragOffsetY += dragAmount
-          },
-          onDragEnd = {
-            if (dragOffsetY < -60f) {
-              // Upward swipe -> Open App Drawer
-              onOpenDrawer()
-            } else if (dragOffsetY > 60f && settings.swipeDownNotifications) {
-              // Downward swipe -> Open Notifications Panel
-              onSwipeDown()
-            }
-            dragOffsetY = 0f
-          }
-        )
-      }
       .testTag("home_screen_container")
   ) {
-    // Dynamic Nothing OS 5 Wallpaper Background
+    // Dynamic Nothing OS 5 Wallpaper Background with non-blocking double-tap detector
     when (settings.wallpaperIndex) {
       0 -> {
         // Dot Matrix Noir
-        Canvas(modifier = Modifier.fillMaxSize().alpha(0.06f)) {
+        Canvas(
+          modifier = Modifier
+            .fillMaxSize()
+            .alpha(0.06f)
+            .pointerInput(settings.doubleTapToSleep) {
+              if (settings.doubleTapToSleep) {
+                detectTapGestures(onDoubleTap = { onDoubleTap() })
+              }
+            }
+        ) {
           val dotSpacing = 32f
           val cols = (size.width / dotSpacing).toInt()
           val rows = (size.height / dotSpacing).toInt()
@@ -147,11 +151,29 @@ fun HomeScreen(
         }
       }
       1 -> {
-        // Pure Carbon Matte (Clean deep black)
+        // Pure Carbon Matte (Clean deep black) with double tap detector
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(settings.doubleTapToSleep) {
+              if (settings.doubleTapToSleep) {
+                detectTapGestures(onDoubleTap = { onDoubleTap() })
+              }
+            }
+        )
       }
       2 -> {
         // Red Circuit Glow
-        Canvas(modifier = Modifier.fillMaxSize().alpha(0.12f)) {
+        Canvas(
+          modifier = Modifier
+            .fillMaxSize()
+            .alpha(0.12f)
+            .pointerInput(settings.doubleTapToSleep) {
+              if (settings.doubleTapToSleep) {
+                detectTapGestures(onDoubleTap = { onDoubleTap() })
+              }
+            }
+        ) {
           drawLine(accentColor, Offset(0f, size.height * 0.25f), Offset(size.width * 0.4f, size.height * 0.25f), strokeWidth = 2f)
           drawLine(accentColor, Offset(size.width * 0.4f, size.height * 0.25f), Offset(size.width * 0.65f, size.height * 0.4f), strokeWidth = 2f)
           drawLine(accentColor, Offset(size.width * 0.65f, size.height * 0.4f), Offset(size.width, size.height * 0.4f), strokeWidth = 2f)
@@ -161,7 +183,16 @@ fun HomeScreen(
       }
       3 -> {
         // Light Monochrome Matrix
-        Canvas(modifier = Modifier.fillMaxSize().alpha(0.14f)) {
+        Canvas(
+          modifier = Modifier
+            .fillMaxSize()
+            .alpha(0.14f)
+            .pointerInput(settings.doubleTapToSleep) {
+              if (settings.doubleTapToSleep) {
+                detectTapGestures(onDoubleTap = { onDoubleTap() })
+              }
+            }
+        ) {
           val dotSpacing = 24f
           val cols = (size.width / dotSpacing).toInt()
           val rows = (size.height / dotSpacing).toInt()
@@ -175,11 +206,20 @@ fun HomeScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-      // Top Navigation / Glance Bar
+      // Top Navigation / Glance Bar (With Swipe down for notifications)
       Row(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(horizontal = 20.dp, vertical = 10.dp),
+          .padding(horizontal = 16.dp, vertical = 12.dp)
+          .pointerInput(settings.swipeDownNotifications) {
+            if (settings.swipeDownNotifications) {
+              detectVerticalDragGestures { _, dragAmount ->
+                if (dragAmount > 30f) {
+                  onSwipeDown()
+                }
+              }
+            }
+          },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
       ) {
@@ -337,37 +377,203 @@ fun HomeScreen(
           }
         }
 
-        // 7. Pinned Apps on Home
+        // 7. Pinned Apps on Home (With Full Touch Reordering & Quick Controls)
         if (pinnedApps.isNotEmpty()) {
           item {
-            Column {
-              Text(
-                text = "FAVORITES",
-                fontFamily = FontFamily.Monospace,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = NothingGrey,
-                letterSpacing = 1.sp,
-                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-              )
-
-              LazyVerticalGrid(
-                columns = GridCells.Fixed(settings.gridColumns),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(modifier = Modifier.fillMaxWidth()) {
+              Row(
                 modifier = Modifier
                   .fillMaxWidth()
-                  .height(((pinnedApps.size + settings.gridColumns - 1) / settings.gridColumns * 86).dp)
+                  .padding(start = 4.dp, end = 4.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
               ) {
-                items(pinnedApps, key = { it.packageName }) { app ->
-                  AppIconItem(
-                    app = app,
-                    onClick = { onAppClick(app) },
-                    iconSize = 50.dp,
-                    showLabel = settings.showLabels,
-                    iconPack = settings.iconPack,
-                    accentColor = accentColor
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                  Box(
+                    modifier = Modifier
+                      .size(6.dp)
+                      .clip(CircleShape)
+                      .background(accentColor)
                   )
+                  Text(
+                    text = "FAVORITES",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NothingWhite,
+                    letterSpacing = 1.sp
+                  )
+                }
+
+                // Rearrange / Move Mode Toggle Pill
+                Box(
+                  modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isReorderingFavorites) accentColor else NothingDarkSurface)
+                    .border(1.dp, if (isReorderingFavorites) accentColor else NothingBorder, RoundedCornerShape(12.dp))
+                    .clickable { isReorderingFavorites = !isReorderingFavorites }
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .testTag("rearrange_favorites_button")
+                ) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.SwapHoriz,
+                      contentDescription = null,
+                      tint = if (isReorderingFavorites) NothingBlack else accentColor,
+                      modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                      text = if (isReorderingFavorites) "DONE" else "REARRANGE",
+                      fontFamily = FontFamily.Monospace,
+                      fontSize = 10.sp,
+                      fontWeight = FontWeight.Bold,
+                      color = if (isReorderingFavorites) NothingBlack else NothingWhite,
+                      letterSpacing = 1.sp
+                    )
+                  }
+                }
+              }
+
+              // Non-nested clean grid using chunked Rows
+              val chunkedApps = pinnedApps.chunked(settings.gridColumns)
+              chunkedApps.forEachIndexed { rowIndex, rowApps ->
+                Row(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                  horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                  rowApps.forEachIndexed { colIndex, app ->
+                    val actualIndex = rowIndex * settings.gridColumns + colIndex
+                    var itemDragOffset by remember(app.packageName) { mutableFloatStateOf(0f) }
+
+                    Box(
+                      modifier = Modifier
+                        .weight(1f)
+                        .offset { IntOffset(itemDragOffset.roundToInt(), 0) }
+                        .scale(if (isReorderingFavorites) 1.03f else 1f)
+                        .then(
+                          if (isReorderingFavorites) {
+                            Modifier
+                              .background(NothingDarkSurface.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                              .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                              .pointerInput(app.packageName) {
+                                detectHorizontalDragGestures(
+                                  onHorizontalDrag = { _, dragAmount ->
+                                    itemDragOffset += dragAmount
+                                  },
+                                  onDragEnd = {
+                                    if (itemDragOffset > 40f && actualIndex < pinnedApps.size - 1) {
+                                      onReorderPinnedApps(actualIndex, actualIndex + 1)
+                                    } else if (itemDragOffset < -40f && actualIndex > 0) {
+                                      onReorderPinnedApps(actualIndex, actualIndex - 1)
+                                    }
+                                    itemDragOffset = 0f
+                                  },
+                                  onDragCancel = {
+                                    itemDragOffset = 0f
+                                  }
+                                )
+                              }
+                          } else Modifier
+                        )
+                        .padding(horizontal = 2.dp, vertical = 4.dp),
+                      contentAlignment = Alignment.Center
+                    ) {
+                      Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                      ) {
+                        AppIconItem(
+                          app = app,
+                          onClick = {
+                            if (!isReorderingFavorites) {
+                              onAppClick(app)
+                            }
+                          },
+                          onLongClick = {
+                            isReorderingFavorites = true
+                          },
+                          iconSize = 52.dp,
+                          showLabel = settings.showLabels,
+                          iconPack = settings.iconPack,
+                          accentColor = accentColor
+                        )
+
+                        // Quick Rearrange Touch Controls when active
+                        if (isReorderingFavorites) {
+                          Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                          ) {
+                            if (actualIndex > 0) {
+                              Box(
+                                modifier = Modifier
+                                  .size(24.dp)
+                                  .clip(CircleShape)
+                                  .background(NothingElevated)
+                                  .clickable { onReorderPinnedApps(actualIndex, actualIndex - 1) },
+                                contentAlignment = Alignment.Center
+                              ) {
+                                Icon(
+                                  imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                  contentDescription = "Move Left",
+                                  tint = NothingWhite,
+                                  modifier = Modifier.size(14.dp)
+                                )
+                              }
+                            }
+
+                            if (actualIndex < pinnedApps.size - 1) {
+                              Box(
+                                modifier = Modifier
+                                  .size(24.dp)
+                                  .clip(CircleShape)
+                                  .background(NothingElevated)
+                                  .clickable { onReorderPinnedApps(actualIndex, actualIndex + 1) },
+                                contentAlignment = Alignment.Center
+                              ) {
+                                Icon(
+                                  imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                  contentDescription = "Move Right",
+                                  tint = NothingWhite,
+                                  modifier = Modifier.size(14.dp)
+                                )
+                              }
+                            }
+
+                            Box(
+                              modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(NothingElevated)
+                                .clickable { onRemovePinnedApp(app) },
+                              contentAlignment = Alignment.Center
+                            ) {
+                              Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove",
+                                tint = accentColor,
+                                modifier = Modifier.size(14.dp)
+                              )
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  // Pad with empty weights if row is incomplete
+                  val missingInRow = settings.gridColumns - rowApps.size
+                  repeat(missingInRow) {
+                    Spacer(modifier = Modifier.weight(1f))
+                  }
                 }
               }
             }

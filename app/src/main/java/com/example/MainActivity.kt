@@ -131,7 +131,10 @@ fun NothingLauncherApp(
       onOpenDrawer = { viewModel.setScreen(LauncherScreen.APP_DRAWER) },
       onOpenSettings = { isSettingsOpen = true },
       onSwipeDown = { viewModel.openNotificationsPanel() },
-      onDoubleTap = { viewModel.lockScreen() }
+      onDoubleTap = { viewModel.lockScreen() },
+      onReorderPinnedApps = { from, to -> viewModel.movePinnedApp(from, to) },
+      onRemovePinnedApp = { app -> viewModel.removePinnedApp(app) },
+      onToggleDockApp = { app -> viewModel.toggleDockApp(app) }
     )
 
     // 2. App Drawer Screen (Animated slide in/out)

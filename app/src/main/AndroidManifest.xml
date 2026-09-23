@@ -1,48 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.nothinglauncher">
-
-    <!-- 1. الصلاحيات الضرورية جداً للـ Launcher -->
-    
-    <!-- هذا الإذن هو "قلب" الـ Launcher؛ بدونه لن يرى التطبيق أي تطبيقات أخرى مثبتة على الهاتف -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" 
-        tools:ignore="QueryAllPackagesPermission" />
-
-    <!-- إذن اختياري: للسماح للمستخدم بتغيير خلفية الشاشة من خلال تطبيقك مستقبلاً -->
-    <uses-permission android:name="android.permission.SET_WALLPAPER" />
-
-    <!-- إذن اختياري: إذا أردت إضافة Widget للإشعارات مستقبلاً -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<!-- لاحظ هنا: قمت بحذف package="com.example.nothinglauncher" تماماً -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Nothing Launcher"
+        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
-
-        <!-- 2. إعدادات الـ Activity الرئيسية -->
+        android:theme="@style/Theme.NothingLauncher">
+        
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:stateNotNeeded="true"
-            android:windowSoftInputMode="adjustPan">
-            
+            android:exported="true">
             <intent-filter>
-                <!-- جعل التطبيق يظهر كأيقونة في قائمة التطبيقات -->
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-
-                <!-- هذه الأسطر هي التي تجعل النظام يتعامل معه كـ Launcher (واجهة رئيسية) -->
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>

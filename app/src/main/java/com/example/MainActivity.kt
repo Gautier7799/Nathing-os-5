@@ -1,4 +1,4 @@
-package com.example.nothinglauncher
+package com.example.nothinglauncher // تأكد أن هذا يطابق الـ package في الـ Manifest
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,22 +14,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import android.content.Context
+import android.graphics.drawable.Drawable
 
 // 1. Model
 data class AppInfo(
     val label: CharSequence,
     val packageName: CharSequence,
-    val icon: android.graphics.drawable.Drawable
+    val icon: Drawable
 )
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // جعل التطبيق يظهر كـ Launcher أساسي عند فتحه
+
+        // يجعل التطبيق يطلب أن يكون الـ Launcher الافتراضي عند فتحه
         val homeIntent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_HOME)
             addCategory(Intent.CATEGORY_DEFAULT)
@@ -38,19 +39,25 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                val apps = remember { getInstalledApps(this) }
+                // جلب التطبيقات مرة واحدة عند بدء التشغيل
+                val context = LocalContext.current
+                val apps by remember { mutableStateOf(getInstalledApps(context)) }
+                
                 NothingLauncherScreen(apps)
             }
         }
     }
 
-    // 2. Logic to get apps
+    // 2. Logic to get installed apps
     private fun getInstalledApps(context: Context): List<AppInfo> {
         val apps = mutableListOf<AppInfo>()
         val intent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
         }
+        
+        // ملاحظة: أندرويد 11+ يحتاج QUERY_ALL_PACKAGES في المانيفست
         val resolveInfos = context.packageManager.queryIntentActivities(intent, 0)
+        
         for (info in resolveInfos) {
             apps.add(
                 AppInfo(
@@ -79,9 +86,12 @@ fun NothingLauncherScreen(apps: List<AppInfo>) {
         ) {
             items(apps) { app ->
                 AppItem(app) {
-                    val context = androidx.compose.ui.platform.LocalContext.current
+                    // تشغيل التطبيق بأمان (Safe Launch)
+                    val context = LocalContext.current
                     val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName.toString())
-                    context.startActivity(launchIntent)
+                    if (launchIntent != null) {
+                        context.startActivity(launchIntent)
+                    }
                 }
             }
         }

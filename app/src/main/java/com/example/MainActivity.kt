@@ -23,7 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.model.LauncherScreen
+import com.example.model.LockShortcutType
 import com.example.ui.HomeScreen
+import com.example.ui.NothingLockScreen
 import com.example.ui.components.ACCENT_COLORS
 import com.example.ui.components.AppDrawerSheet
 import com.example.ui.components.EditNoteDialog
@@ -75,6 +77,7 @@ fun NothingLauncherApp(
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val settings by viewModel.settings.collectAsStateWithLifecycle()
   val activeFolder by viewModel.activeOpenFolder.collectAsStateWithLifecycle()
+  val notifications by viewModel.notifications.collectAsStateWithLifecycle()
 
   var isEditingNote by remember { mutableStateOf(false) }
   var isSettingsOpen by remember { mutableStateOf(false) }
@@ -84,8 +87,12 @@ fun NothingLauncherApp(
   }
 
   // Handle hardware back press gracefully
-  BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER || isSettingsOpen || activeFolder != null) {
-    if (activeFolder != null) {
+  BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER || currentScreen == LauncherScreen.LOCK_SCREEN || isSettingsOpen || activeFolder != null) {
+    if (currentScreen == LauncherScreen.LOCK_SCREEN) {
+      if (settings.lockScreen.securityType == com.example.model.LockSecurityType.SWIPE) {
+        viewModel.unlockLauncherScreen()
+      }
+    } else if (activeFolder != null) {
       viewModel.openFolder(null)
     } else if (isSettingsOpen) {
       isSettingsOpen = false
@@ -167,6 +174,7 @@ fun NothingLauncherApp(
       LauncherSettingsDialog(
         settings = settings,
         onUpdateSettings = { viewModel.updateSettings(it) },
+        onLockScreenNow = { viewModel.lockLauncherScreen() },
         onDismiss = { isSettingsOpen = false },
         accentColor = accentColor
       )
@@ -179,6 +187,27 @@ fun NothingLauncherApp(
         onSave = { viewModel.updateQuickNote(it) },
         onDismiss = { isEditingNote = false },
         accentColor = accentColor
+      )
+    }
+
+    // 6. Signature Nothing OS 5 Lock Screen
+    AnimatedVisibility(
+      visible = currentScreen == LauncherScreen.LOCK_SCREEN,
+      enter = fadeIn(androidx.compose.animation.core.tween(300)),
+      exit = fadeOut(androidx.compose.animation.core.tween(250)) + slideOutVertically(targetOffsetY = { -it / 3 })
+    ) {
+      NothingLockScreen(
+        currentTime = currentTime,
+        currentDate = currentDate,
+        weather = weather,
+        fitness = fitness,
+        toggles = toggles,
+        notifications = notifications,
+        settings = settings,
+        onUnlock = { viewModel.unlockLauncherScreen() },
+        onToggleTorch = { viewModel.toggleTorch() },
+        onLaunchShortcut = { shortcut: LockShortcutType -> viewModel.launchShortcut(shortcut) },
+        onDismissNotification = { id: String -> viewModel.dismissNotification(id) }
       )
     }
   }

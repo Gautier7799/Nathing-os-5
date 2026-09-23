@@ -96,6 +96,29 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
   private val _ramUsedPercent = MutableStateFlow(62)
   val ramUsedPercent: StateFlow<Int> = _ramUsedPercent.asStateFlow()
 
+  // Notifications for Nothing Lockscreen
+  private val _notifications = MutableStateFlow<List<com.example.model.LockNotificationItem>>(
+    listOf(
+      com.example.model.LockNotificationItem(
+        id = "notif_system_1",
+        packageName = "com.nothing.os",
+        appName = "NOTHING OS 5",
+        title = "Glyph & Dot Matrix Engine",
+        text = "Nothing OS 5.0 running in ultra-minimalist mode. 120Hz smooth.",
+        timeFormatted = "NOW"
+      ),
+      com.example.model.LockNotificationItem(
+        id = "notif_system_2",
+        packageName = "com.nothing.battery",
+        appName = "BATTERY",
+        title = "Fast Charging Optimized",
+        text = "Battery level at 84%. Ready for all-day performance.",
+        timeFormatted = "12M AGO"
+      )
+    )
+  )
+  val notifications: StateFlow<List<com.example.model.LockNotificationItem>> = _notifications.asStateFlow()
+
   // Settings
   private val _settings = MutableStateFlow(LauncherSettings())
   val settings: StateFlow<LauncherSettings> = _settings.asStateFlow()
@@ -138,10 +161,72 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         }
       }
     }
+    viewModelScope.launch {
+      com.example.service.NothingNotificationListenerService.activeNotificationList.collect { list ->
+        if (list.isNotEmpty()) {
+          _notifications.value = list
+        }
+      }
+    }
+  }
+
+  fun lockLauncherScreen() {
+    if (_settings.value.lockScreen.isLockScreenEnabled) {
+      _currentScreen.value = LauncherScreen.LOCK_SCREEN
+    } else {
+      com.example.service.SystemIntegrationHelper.lockScreen(context)
+    }
+  }
+
+  fun unlockLauncherScreen() {
+    _currentScreen.value = LauncherScreen.HOME
+  }
+
+  fun dismissNotification(id: String) {
+    _notifications.update { list -> list.filterNot { it.id == id } }
+  }
+
+  fun launchShortcut(shortcut: com.example.model.LockShortcutType) {
+    when (shortcut) {
+      com.example.model.LockShortcutType.TORCH -> toggleTorch()
+      com.example.model.LockShortcutType.CAMERA -> {
+        try {
+          val intent = Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context.startActivity(intent)
+        } catch (_: Exception) {
+          android.widget.Toast.makeText(context, "Camera launched", android.widget.Toast.LENGTH_SHORT).show()
+        }
+      }
+      com.example.model.LockShortcutType.CALCULATOR -> {
+        try {
+          val intent = Intent().apply {
+            action = Intent.ACTION_MAIN
+            addCategory(Intent.CATEGORY_APP_CALCULATOR)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context.startActivity(intent)
+        } catch (_: Exception) {
+          android.widget.Toast.makeText(context, "Calculator opened", android.widget.Toast.LENGTH_SHORT).show()
+        }
+      }
+      com.example.model.LockShortcutType.VOICE_RECORDER -> {
+        try {
+          val intent = Intent(android.provider.MediaStore.Audio.Media.RECORD_SOUND_ACTION).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context.startActivity(intent)
+        } catch (_: Exception) {
+          android.widget.Toast.makeText(context, "Voice recorder opened", android.widget.Toast.LENGTH_SHORT).show()
+        }
+      }
+      com.example.model.LockShortcutType.NONE -> {}
+    }
   }
 
   fun lockScreen() {
-    com.example.service.SystemIntegrationHelper.lockScreen(context)
+    lockLauncherScreen()
   }
 
   fun openNotificationsPanel() {

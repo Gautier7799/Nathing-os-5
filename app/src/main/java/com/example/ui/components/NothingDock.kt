@@ -46,7 +46,8 @@ fun NothingDock(
   onOpenSearch: () -> Unit,
   modifier: Modifier = Modifier,
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
-  accentColor: Color = NothingRed
+  accentColor: Color = NothingRed,
+  showSearchBar: Boolean = true
 ) {
   Column(
     modifier = modifier
@@ -97,47 +98,49 @@ fun NothingDock(
       }
     }
 
-    Spacer(modifier = Modifier.height(10.dp))
+    if (showSearchBar) {
+      Spacer(modifier = Modifier.height(10.dp))
 
-    // Signature Nothing Search Pill
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(44.dp)
-        .clip(RoundedCornerShape(22.dp))
-        .background(NothingDarkSurface)
-        .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
-        .clickable { onOpenSearch() }
-        .padding(horizontal = 16.dp)
-        .testTag("nothing_search_pill"),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+      // Signature Nothing Search Pill
       Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(44.dp)
+          .clip(RoundedCornerShape(22.dp))
+          .background(NothingDarkSurface)
+          .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
+          .clickable { onOpenSearch() }
+          .padding(horizontal = 16.dp)
+          .testTag("nothing_search_pill"),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.SpaceBetween
       ) {
-        Icon(
-          imageVector = Icons.Default.Search,
-          contentDescription = "Search",
-          tint = NothingGrey,
-          modifier = Modifier.size(18.dp)
-        )
-        Text(
-          text = "SEARCH OR TYPE URL...",
-          fontFamily = FontFamily.Monospace,
-          fontSize = 12.sp,
-          color = NothingGrey,
-          letterSpacing = 1.sp
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Search",
+            tint = NothingGrey,
+            modifier = Modifier.size(18.dp)
+          )
+          Text(
+            text = "SEARCH OR TYPE URL...",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 12.sp,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+        }
+
+        Box(
+          modifier = Modifier
+            .size(6.dp)
+            .clip(CircleShape)
+            .background(accentColor)
         )
       }
-
-      Box(
-        modifier = Modifier
-          .size(6.dp)
-          .clip(CircleShape)
-          .background(accentColor)
-      )
     }
   }
 }

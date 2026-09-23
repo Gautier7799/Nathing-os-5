@@ -1,5 +1,6 @@
 package com.example.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -19,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,7 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -127,6 +131,49 @@ fun HomeScreen(
       }
       .testTag("home_screen_container")
   ) {
+    // Dynamic Nothing OS 5 Wallpaper Background
+    when (settings.wallpaperIndex) {
+      0 -> {
+        // Dot Matrix Noir
+        Canvas(modifier = Modifier.fillMaxSize().alpha(0.06f)) {
+          val dotSpacing = 32f
+          val cols = (size.width / dotSpacing).toInt()
+          val rows = (size.height / dotSpacing).toInt()
+          for (i in 0..cols) {
+            for (j in 0..rows) {
+              drawCircle(Color.White, 1.2f, Offset(i * dotSpacing, j * dotSpacing))
+            }
+          }
+        }
+      }
+      1 -> {
+        // Pure Carbon Matte (Clean deep black)
+      }
+      2 -> {
+        // Red Circuit Glow
+        Canvas(modifier = Modifier.fillMaxSize().alpha(0.12f)) {
+          drawLine(accentColor, Offset(0f, size.height * 0.25f), Offset(size.width * 0.4f, size.height * 0.25f), strokeWidth = 2f)
+          drawLine(accentColor, Offset(size.width * 0.4f, size.height * 0.25f), Offset(size.width * 0.65f, size.height * 0.4f), strokeWidth = 2f)
+          drawLine(accentColor, Offset(size.width * 0.65f, size.height * 0.4f), Offset(size.width, size.height * 0.4f), strokeWidth = 2f)
+          drawCircle(accentColor, 4.5f, Offset(size.width * 0.4f, size.height * 0.25f))
+          drawCircle(accentColor, 4.5f, Offset(size.width * 0.65f, size.height * 0.4f))
+        }
+      }
+      3 -> {
+        // Light Monochrome Matrix
+        Canvas(modifier = Modifier.fillMaxSize().alpha(0.14f)) {
+          val dotSpacing = 24f
+          val cols = (size.width / dotSpacing).toInt()
+          val rows = (size.height / dotSpacing).toInt()
+          for (i in 0..cols) {
+            for (j in 0..rows) {
+              drawCircle(Color.White, 1.4f, Offset(i * dotSpacing, j * dotSpacing))
+            }
+          }
+        }
+      }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
       // Top Navigation / Glance Bar
       Row(
@@ -156,15 +203,32 @@ fun HomeScreen(
           )
         }
 
-        IconButton(
-          onClick = onOpenSettings,
-          modifier = Modifier.testTag("home_settings_button")
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-          Icon(
-            imageVector = Icons.Default.Settings,
-            contentDescription = "Launcher Settings",
-            tint = NothingGrey
-          )
+          IconButton(
+            onClick = onDoubleTap,
+            modifier = Modifier.testTag("home_lock_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.Lock,
+              contentDescription = "Lock Screen",
+              tint = NothingGrey,
+              modifier = Modifier.size(20.dp)
+            )
+          }
+
+          IconButton(
+            onClick = onOpenSettings,
+            modifier = Modifier.testTag("home_settings_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.Settings,
+              contentDescription = "Launcher Settings",
+              tint = NothingGrey
+            )
+          }
         }
       }
 
@@ -322,7 +386,8 @@ fun HomeScreen(
         onOpenDrawer = onOpenDrawer,
         onOpenSearch = onOpenDrawer,
         iconPack = settings.iconPack,
-        accentColor = accentColor
+        accentColor = accentColor,
+        showSearchBar = settings.showSearchBarOnDock
       )
     }
   }

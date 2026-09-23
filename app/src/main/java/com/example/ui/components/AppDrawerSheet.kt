@@ -22,10 +22,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -124,7 +124,7 @@ fun AppDrawerSheet(
           modifier = Modifier.testTag("close_drawer_button")
         ) {
           Icon(
-            imageVector = Icons.Default.ArrowBack,
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back to Home",
             tint = NothingWhite
           )
@@ -328,7 +328,7 @@ private fun AppContextMenuSheet(
       // Action 1: Open
       MenuRow(
         title = "OPEN APP",
-        icon = Icons.Default.OpenInNew,
+        icon = Icons.AutoMirrored.Filled.OpenInNew,
         accentColor = accentColor,
         onClick = onLaunch
       )

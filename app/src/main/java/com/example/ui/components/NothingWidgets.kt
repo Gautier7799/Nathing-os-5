@@ -24,8 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlashlightOff
 import androidx.compose.material.icons.filled.FlashlightOn
@@ -399,7 +399,7 @@ fun NothingStepWidget(
           letterSpacing = 1.sp
         )
         Icon(
-          imageVector = Icons.Default.DirectionsRun,
+          imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
           contentDescription = "Pedometer",
           tint = accentColor,
           modifier = Modifier.size(16.dp)

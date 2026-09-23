@@ -1,10 +1,15 @@
 package com.example.service
 
+import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.example.model.LockNotificationItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class NothingNotificationListenerService : NotificationListenerService() {
 
@@ -20,6 +25,7 @@ class NothingNotificationListenerService : NotificationListenerService() {
     _isListening.value = false
     instance = null
     _activePackages.value = emptySet()
+    _activeNotificationList.value = emptyList()
   }
 
   override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -36,14 +42,42 @@ class NothingNotificationListenerService : NotificationListenerService() {
     try {
       val notifications = activeNotifications ?: emptyArray()
       val packageMap = mutableMapOf<String, Int>()
+      val itemList = mutableListOf<LockNotificationItem>()
+      val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
       for (sbn in notifications) {
         val pkg = sbn.packageName ?: continue
         if (!sbn.isOngoing) {
           packageMap[pkg] = (packageMap[pkg] ?: 0) + 1
+
+          val extras = sbn.notification?.extras
+          val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+          val text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+
+          if (!title.isNullOrBlank() || !text.isNullOrBlank()) {
+            val appLabel = try {
+              val appInfo = packageManager.getApplicationInfo(pkg, 0)
+              packageManager.getApplicationLabel(appInfo).toString()
+            } catch (_: Exception) {
+              pkg.substringAfterLast('.').uppercase()
+            }
+
+            itemList.add(
+              LockNotificationItem(
+                id = "${sbn.id}_${sbn.packageName}",
+                packageName = pkg,
+                appName = appLabel,
+                title = title ?: appLabel,
+                text = text ?: "",
+                timeFormatted = timeFormat.format(Date(sbn.postTime))
+              )
+            )
+          }
         }
       }
       _packageNotificationCounts.value = packageMap
       _activePackages.value = packageMap.keys
+      _activeNotificationList.value = itemList
     } catch (_: Exception) {
       // Ignored if permission revoked
     }
@@ -59,6 +93,9 @@ class NothingNotificationListenerService : NotificationListenerService() {
 
     private val _packageNotificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val packageNotificationCounts: StateFlow<Map<String, Int>> = _packageNotificationCounts.asStateFlow()
+
+    private val _activeNotificationList = MutableStateFlow<List<LockNotificationItem>>(emptyList())
+    val activeNotificationList: StateFlow<List<LockNotificationItem>> = _activeNotificationList.asStateFlow()
 
     fun getNotificationCount(packageName: String): Int {
       return _packageNotificationCounts.value[packageName] ?: 0

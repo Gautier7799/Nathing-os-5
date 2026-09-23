@@ -9,10 +9,53 @@ enum class IconPackStyle {
 }
 
 enum class LauncherScreen {
+  LOCK_SCREEN,
   HOME,
   APP_DRAWER,
   SETTINGS
 }
+
+enum class LockClockStyle {
+  DOT_MATRIX_BIG,     // Large NDOT font style
+  VERTICAL_STACK,     // Hour on top, minute on bottom in bold typography
+  MINIMAL_ANALOG,     // Minimalist Nothing watch face with dots & ticking second
+  CLASSIC_DIGITAL     // Crisp clean digital line with glyph date
+}
+
+enum class LockSecurityType {
+  SWIPE,              // Swipe up to unlock
+  PIN                 // 4-digit Nothing PIN lock
+}
+
+enum class LockShortcutType {
+  TORCH,
+  CAMERA,
+  CALCULATOR,
+  VOICE_RECORDER,
+  NONE
+}
+
+data class LockNotificationItem(
+  val id: String,
+  val packageName: String,
+  val appName: String,
+  val title: String,
+  val text: String,
+  val timeFormatted: String = "NOW"
+)
+
+data class LockScreenSettings(
+  val isLockScreenEnabled: Boolean = true,
+  val securityType: LockSecurityType = LockSecurityType.SWIPE,
+  val pinCode: String = "1234",
+  val clockStyle: LockClockStyle = LockClockStyle.DOT_MATRIX_BIG,
+  val showWidgets: Boolean = true,
+  val showNotifications: Boolean = true,
+  val showBatteryGlyph: Boolean = true,
+  val leftShortcut: LockShortcutType = LockShortcutType.TORCH,
+  val rightShortcut: LockShortcutType = LockShortcutType.CAMERA,
+  val customOwnerInfo: String = "NOTHING PHONE (2) • NOTHING OS 5"
+)
 
 data class AppItem(
   val packageName: String,
@@ -70,5 +113,9 @@ data class LauncherSettings(
   val is12HourFormat: Boolean = false,
   val tempUnitCelsius: Boolean = true,
   val doubleTapToSleep: Boolean = true,
-  val swipeDownNotifications: Boolean = true
+  val swipeDownNotifications: Boolean = true,
+  val showSearchBarOnDock: Boolean = true,
+  val hapticFeedbackEnabled: Boolean = true,
+  val wallpaperIndex: Int = 0, // 0: Dark Dot Matrix, 1: Pure Carbon Matte, 2: Circuit Glow, 3: Light Dots
+  val lockScreen: LockScreenSettings = LockScreenSettings()
 )

@@ -122,8 +122,32 @@ fun AppIconItem(
         )
       }
 
-      // Small Nothing Red indicator dot if pinned
-      if (app.isPinned) {
+      // Notification Dot / Badge (Nothing OS Signature style)
+      if (app.notificationCount > 0) {
+        Box(
+          modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(2.dp)
+            .clip(CircleShape)
+            .background(accentColor)
+            .border(1.dp, NothingBlack, CircleShape)
+            .padding(horizontal = if (app.notificationCount > 1) 4.dp else 0.dp),
+          contentAlignment = Alignment.Center
+        ) {
+          if (app.notificationCount > 1) {
+            Text(
+              text = if (app.notificationCount > 99) "99+" else app.notificationCount.toString(),
+              color = NothingWhite,
+              fontSize = 8.sp,
+              fontFamily = FontFamily.Monospace,
+              fontWeight = FontWeight.Bold
+            )
+          } else {
+            Box(modifier = Modifier.size(7.dp))
+          }
+        }
+      } else if (app.isPinned) {
+        // Small Nothing Red indicator dot if pinned
         Box(
           modifier = Modifier
             .size(6.dp)

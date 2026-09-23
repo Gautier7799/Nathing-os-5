@@ -21,7 +21,8 @@ data class AppItem(
   val icon: Drawable? = null,
   val isPinned: Boolean = false,
   val isDock: Boolean = false,
-  val category: String = "General"
+  val category: String = "General",
+  val notificationCount: Int = 0
 )
 
 data class FolderItem(
@@ -67,5 +68,7 @@ data class LauncherSettings(
   val gridColumns: Int = 4,
   val showLabels: Boolean = true,
   val is12HourFormat: Boolean = false,
-  val tempUnitCelsius: Boolean = true
+  val tempUnitCelsius: Boolean = true,
+  val doubleTapToSleep: Boolean = true,
+  val swipeDownNotifications: Boolean = true
 )

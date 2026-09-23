@@ -122,7 +122,9 @@ fun NothingLauncherApp(
       onNextAudioTrack = { viewModel.nextAudioTrack() },
       onEditNote = { isEditingNote = true },
       onOpenDrawer = { viewModel.setScreen(LauncherScreen.APP_DRAWER) },
-      onOpenSettings = { isSettingsOpen = true }
+      onOpenSettings = { isSettingsOpen = true },
+      onSwipeDown = { viewModel.openNotificationsPanel() },
+      onDoubleTap = { viewModel.lockScreen() }
     )
 
     // 2. App Drawer Screen (Animated slide in/out)

@@ -1,6 +1,7 @@
 package com.example.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,6 +87,8 @@ fun HomeScreen(
   onEditNote: () -> Unit,
   onOpenDrawer: () -> Unit,
   onOpenSettings: () -> Unit,
+  onSwipeDown: () -> Unit = {},
+  onDoubleTap: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val accentColor = remember(settings.accentColorIndex) {
@@ -98,7 +101,14 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(NothingBlack)
-      .pointerInput(Unit) {
+      .pointerInput(settings.doubleTapToSleep) {
+        if (settings.doubleTapToSleep) {
+          detectTapGestures(
+            onDoubleTap = { onDoubleTap() }
+          )
+        }
+      }
+      .pointerInput(settings.swipeDownNotifications) {
         detectVerticalDragGestures(
           onVerticalDrag = { _, dragAmount ->
             dragOffsetY += dragAmount
@@ -107,6 +117,9 @@ fun HomeScreen(
             if (dragOffsetY < -60f) {
               // Upward swipe -> Open App Drawer
               onOpenDrawer()
+            } else if (dragOffsetY > 60f && settings.swipeDownNotifications) {
+              // Downward swipe -> Open Notifications Panel
+              onSwipeDown()
             }
             dragOffsetY = 0f
           }

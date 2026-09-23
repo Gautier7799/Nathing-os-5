@@ -116,6 +116,40 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     startClockUpdates()
     registerBatteryReceiver()
     checkSystemStorage()
+    observeNotificationCounts()
+  }
+
+  private fun observeNotificationCounts() {
+    viewModelScope.launch {
+      com.example.service.NothingNotificationListenerService.packageNotificationCounts.collect { counts ->
+        _installedApps.update { list ->
+          list.map { it.copy(notificationCount = counts[it.packageName] ?: 0) }
+        }
+        _pinnedApps.update { list ->
+          list.map { it.copy(notificationCount = counts[it.packageName] ?: 0) }
+        }
+        _dockApps.update { list ->
+          list.map { it.copy(notificationCount = counts[it.packageName] ?: 0) }
+        }
+        _folders.update { folderList ->
+          folderList.map { folder ->
+            folder.copy(apps = folder.apps.map { it.copy(notificationCount = counts[it.packageName] ?: 0) })
+          }
+        }
+      }
+    }
+  }
+
+  fun lockScreen() {
+    com.example.service.SystemIntegrationHelper.lockScreen(context)
+  }
+
+  fun openNotificationsPanel() {
+    com.example.service.SystemIntegrationHelper.openNotificationShade(context)
+  }
+
+  fun uninstallApp(packageName: String) {
+    com.example.service.SystemIntegrationHelper.requestUninstallPackage(context, packageName)
   }
 
   fun setScreen(screen: LauncherScreen) {

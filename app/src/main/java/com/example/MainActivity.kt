@@ -1,183 +1,113 @@
-package com.example
+package com.example.nothinglauncher
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.model.LauncherScreen
-import com.example.ui.HomeScreen
-import com.example.ui.components.ACCENT_COLORS
-import com.example.ui.components.AppDrawerSheet
-import com.example.ui.components.EditNoteDialog
-import com.example.ui.components.ExpandedFolderSheet
-import com.example.ui.components.LauncherSettingsDialog
-import com.example.ui.theme.MyApplicationTheme
-import com.example.viewmodel.LauncherViewModel
+import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import android.content.Context
+
+// 1. Model
+data class AppInfo(
+    val label: CharSequence,
+    val packageName: CharSequence,
+    val icon: android.graphics.drawable.Drawable
+)
 
 class MainActivity : ComponentActivity() {
-
-  private val viewModel: LauncherViewModel by viewModels()
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    enableEdgeToEdge()
-
-    setContent {
-      MyApplicationTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          NothingLauncherApp(
-            viewModel = viewModel,
-            modifier = Modifier.padding(innerPadding)
-          )
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // جعل التطبيق يظهر كـ Launcher أساسي عند فتحه
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            addCategory(Intent.CATEGORY_DEFAULT)
         }
-      }
+        startActivity(homeIntent)
+
+        setContent {
+            MaterialTheme {
+                val apps = remember { getInstalledApps(this) }
+                NothingLauncherScreen(apps)
+            }
+        }
     }
-  }
+
+    // 2. Logic to get apps
+    private fun getInstalledApps(context: Context): List<AppInfo> {
+        val apps = mutableListOf<AppInfo>()
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveInfos = context.packageManager.queryIntentActivities(intent, 0)
+        for (info in resolveInfos) {
+            apps.add(
+                AppInfo(
+                    label = info.loadLabel(context.packageManager),
+                    packageName = info.activityInfo.packageName,
+                    icon = info.loadIcon(context.packageManager)
+                )
+            )
+        }
+        return apps.sortedBy { it.label.toString().lowercase() }
+    }
+}
+
+// 3. UI Components
+@Composable
+fun NothingLauncherScreen(apps: List<AppInfo>) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = androidx.compose.ui.graphics.Color.Black
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            items(apps) { app ->
+                AppItem(app) {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName.toString())
+                    context.startActivity(launchIntent)
+                }
+            }
+        }
+    }
 }
 
 @Composable
-fun NothingLauncherApp(
-  viewModel: LauncherViewModel,
-  modifier: Modifier = Modifier
-) {
-  val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
-  val currentTime by viewModel.currentTime.collectAsStateWithLifecycle()
-  val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
-  val weather by viewModel.weather.collectAsStateWithLifecycle()
-  val toggles by viewModel.toggles.collectAsStateWithLifecycle()
-  val fitness by viewModel.fitness.collectAsStateWithLifecycle()
-  val audio by viewModel.audio.collectAsStateWithLifecycle()
-  val quickNote by viewModel.quickNote.collectAsStateWithLifecycle()
-  val storagePct by viewModel.storageUsedPercent.collectAsStateWithLifecycle()
-  val ramPct by viewModel.ramUsedPercent.collectAsStateWithLifecycle()
-  val folders by viewModel.folders.collectAsStateWithLifecycle()
-  val pinnedApps by viewModel.pinnedApps.collectAsStateWithLifecycle()
-  val dockApps by viewModel.dockApps.collectAsStateWithLifecycle()
-  val installedApps by viewModel.installedApps.collectAsStateWithLifecycle()
-  val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-  val settings by viewModel.settings.collectAsStateWithLifecycle()
-  val activeFolder by viewModel.activeOpenFolder.collectAsStateWithLifecycle()
-
-  var isEditingNote by remember { mutableStateOf(false) }
-  var isSettingsOpen by remember { mutableStateOf(false) }
-
-  val accentColor = remember(settings.accentColorIndex) {
-    ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
-  }
-
-  // Handle hardware back press gracefully
-  BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER || isSettingsOpen || activeFolder != null) {
-    if (activeFolder != null) {
-      viewModel.openFolder(null)
-    } else if (isSettingsOpen) {
-      isSettingsOpen = false
-    } else if (currentScreen == LauncherScreen.APP_DRAWER) {
-      viewModel.setSearchQuery("")
-      viewModel.setScreen(LauncherScreen.HOME)
-    }
-  }
-
-  Box(modifier = modifier.fillMaxSize()) {
-    // 1. Home Screen
-    HomeScreen(
-      currentTime = currentTime,
-      currentDate = currentDate,
-      weather = weather,
-      toggles = toggles,
-      fitness = fitness,
-      audio = audio,
-      quickNote = quickNote,
-      storagePct = storagePct,
-      ramPct = ramPct,
-      folders = folders,
-      pinnedApps = pinnedApps,
-      dockApps = dockApps,
-      settings = settings,
-      onAppClick = { app -> viewModel.launchApp(app) },
-      onOpenFolder = { folder -> viewModel.openFolder(folder) },
-      onToggleFolderEnlarged = { folderId -> viewModel.toggleFolderEnlarged(folderId) },
-      onToggleTorch = { viewModel.toggleTorch() },
-      onCycleSound = { viewModel.cycleSoundMode() },
-      onToggleWeather = { viewModel.toggleWeatherCondition() },
-      onAddStep = { viewModel.addSteps() },
-      onToggleAudioPlay = { viewModel.toggleAudioPlayback() },
-      onNextAudioTrack = { viewModel.nextAudioTrack() },
-      onEditNote = { isEditingNote = true },
-      onOpenDrawer = { viewModel.setScreen(LauncherScreen.APP_DRAWER) },
-      onOpenSettings = { isSettingsOpen = true }
-    )
-
-    // 2. App Drawer Screen (Animated slide in/out)
-    AnimatedVisibility(
-      visible = currentScreen == LauncherScreen.APP_DRAWER,
-      enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-      exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+fun AppItem(app: AppInfo, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(8.dp)
     ) {
-      AppDrawerSheet(
-        apps = installedApps,
-        searchQuery = searchQuery,
-        onSearchChange = { viewModel.setSearchQuery(it) },
-        onAppClick = { app -> viewModel.launchApp(app) },
-        onTogglePin = { app -> viewModel.togglePinApp(app) },
-        onToggleDock = { app -> viewModel.toggleDockApp(app) },
-        onOpenAppInfo = { app -> viewModel.openAppInfo(app) },
-        onClose = {
-          viewModel.setSearchQuery("")
-          viewModel.setScreen(LauncherScreen.HOME)
-        },
-        iconPack = settings.iconPack,
-        accentColor = accentColor
-      )
+        Icon(
+            painter = rememberAsyncImagePainter(app.icon),
+            contentDescription = app.label.toString(),
+            modifier = Modifier.size(55.dp),
+            tint = androidx.compose.ui.graphics.Color.Unspecified
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = app.label.toString(),
+            color = androidx.compose.ui.graphics.Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1
+        )
     }
-
-    // 3. Expanded Folder Dialog
-    activeFolder?.let { folder ->
-      ExpandedFolderSheet(
-        folder = folder,
-        onDismiss = { viewModel.openFolder(null) },
-        onAppClick = { app -> viewModel.launchApp(app) },
-        onToggleEnlarged = { viewModel.toggleFolderEnlarged(folder.id) },
-        iconPack = settings.iconPack,
-        accentColor = accentColor
-      )
-    }
-
-    // 4. Launcher Settings Dialog
-    if (isSettingsOpen) {
-      LauncherSettingsDialog(
-        settings = settings,
-        onUpdateSettings = { viewModel.updateSettings(it) },
-        onDismiss = { isSettingsOpen = false },
-        accentColor = accentColor
-      )
-    }
-
-    // 5. Quick Memo Edit Dialog
-    if (isEditingNote) {
-      EditNoteDialog(
-        initialNote = quickNote,
-        onSave = { viewModel.updateQuickNote(it) },
-        onDismiss = { isEditingNote = false },
-        accentColor = accentColor
-      )
-    }
-  }
 }

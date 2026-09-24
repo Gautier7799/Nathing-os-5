@@ -62,17 +62,20 @@ class NothingNotificationListenerService : NotificationListenerService() {
               pkg.substringAfterLast('.').uppercase()
             }
 
-            val uniqueKey = sbn.key ?: "${sbn.packageName}_${sbn.id}_${sbn.postTime}_${itemList.size}"
-            itemList.add(
-              LockNotificationItem(
-                id = uniqueKey,
-                packageName = pkg,
-                appName = appLabel,
-                title = title ?: appLabel,
-                text = text ?: "",
-                timeFormatted = timeFormat.format(Date(sbn.postTime))
+            val baseKey = sbn.key?.takeIf { it.isNotBlank() } ?: "${sbn.packageName}_${sbn.id}_${sbn.postTime}"
+            val uniqueKey = "${baseKey}_${itemList.size}"
+            if (itemList.none { it.id == uniqueKey }) {
+              itemList.add(
+                LockNotificationItem(
+                  id = uniqueKey,
+                  packageName = pkg,
+                  appName = appLabel,
+                  title = title ?: appLabel,
+                  text = text ?: "",
+                  timeFormatted = timeFormat.format(Date(sbn.postTime))
+                )
               )
-            )
+            }
           }
         }
       }

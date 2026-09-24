@@ -72,6 +72,7 @@ import com.example.ui.components.NothingQuickNoteWidget
 import com.example.ui.components.NothingQuickTogglesWidget
 import com.example.ui.components.NothingResourceWidget
 import com.example.ui.components.NothingStepWidget
+import com.example.ui.components.NothingWallpaperBackground
 import com.example.ui.components.NothingWeatherWidget
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -126,84 +127,13 @@ fun HomeScreen(
       .background(NothingBlack)
       .testTag("home_screen_container")
   ) {
-    // Dynamic Nothing OS 5 Wallpaper Background with non-blocking double-tap detector
-    when (settings.wallpaperIndex) {
-      0 -> {
-        // Dot Matrix Noir
-        Canvas(
-          modifier = Modifier
-            .fillMaxSize()
-            .alpha(0.06f)
-            .pointerInput(settings.doubleTapToSleep) {
-              if (settings.doubleTapToSleep) {
-                detectTapGestures(onDoubleTap = { onDoubleTap() })
-              }
-            }
-        ) {
-          val dotSpacing = 32f
-          val cols = (size.width / dotSpacing).toInt()
-          val rows = (size.height / dotSpacing).toInt()
-          for (i in 0..cols) {
-            for (j in 0..rows) {
-              drawCircle(Color.White, 1.2f, Offset(i * dotSpacing, j * dotSpacing))
-            }
-          }
-        }
-      }
-      1 -> {
-        // Pure Carbon Matte (Clean deep black) with double tap detector
-        Box(
-          modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(settings.doubleTapToSleep) {
-              if (settings.doubleTapToSleep) {
-                detectTapGestures(onDoubleTap = { onDoubleTap() })
-              }
-            }
-        )
-      }
-      2 -> {
-        // Red Circuit Glow
-        Canvas(
-          modifier = Modifier
-            .fillMaxSize()
-            .alpha(0.12f)
-            .pointerInput(settings.doubleTapToSleep) {
-              if (settings.doubleTapToSleep) {
-                detectTapGestures(onDoubleTap = { onDoubleTap() })
-              }
-            }
-        ) {
-          drawLine(accentColor, Offset(0f, size.height * 0.25f), Offset(size.width * 0.4f, size.height * 0.25f), strokeWidth = 2f)
-          drawLine(accentColor, Offset(size.width * 0.4f, size.height * 0.25f), Offset(size.width * 0.65f, size.height * 0.4f), strokeWidth = 2f)
-          drawLine(accentColor, Offset(size.width * 0.65f, size.height * 0.4f), Offset(size.width, size.height * 0.4f), strokeWidth = 2f)
-          drawCircle(accentColor, 4.5f, Offset(size.width * 0.4f, size.height * 0.25f))
-          drawCircle(accentColor, 4.5f, Offset(size.width * 0.65f, size.height * 0.4f))
-        }
-      }
-      3 -> {
-        // Light Monochrome Matrix
-        Canvas(
-          modifier = Modifier
-            .fillMaxSize()
-            .alpha(0.14f)
-            .pointerInput(settings.doubleTapToSleep) {
-              if (settings.doubleTapToSleep) {
-                detectTapGestures(onDoubleTap = { onDoubleTap() })
-              }
-            }
-        ) {
-          val dotSpacing = 24f
-          val cols = (size.width / dotSpacing).toInt()
-          val rows = (size.height / dotSpacing).toInt()
-          for (i in 0..cols) {
-            for (j in 0..rows) {
-              drawCircle(Color.White, 1.4f, Offset(i * dotSpacing, j * dotSpacing))
-            }
-          }
-        }
-      }
-    }
+    // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)
+    NothingWallpaperBackground(
+      settings = settings,
+      isLockScreen = false,
+      accentColor = accentColor,
+      onDoubleTap = onDoubleTap
+    )
 
     Column(modifier = Modifier.fillMaxSize()) {
       // Top Navigation / Glance Bar (With Swipe down for notifications)

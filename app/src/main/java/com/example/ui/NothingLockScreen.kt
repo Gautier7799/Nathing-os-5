@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -58,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import com.example.ui.components.NothingWallpaperBackground
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -166,26 +168,20 @@ fun NothingLockScreen(
       }
       .testTag("nothing_lock_screen")
   ) {
-    // Subtle background matrix dots
-    Canvas(modifier = Modifier.fillMaxSize().alpha(0.08f)) {
-      val dotSpacing = 28f
-      val cols = (size.width / dotSpacing).toInt()
-      val rows = (size.height / dotSpacing).toInt()
-      for (i in 0..cols) {
-        for (j in 0..rows) {
-          drawCircle(
-            color = Color.White,
-            radius = 1.2f,
-            center = Offset(i * dotSpacing, j * dotSpacing)
-          )
-        }
-      }
-    }
+    // Dynamic Wallpaper for Lock Screen (Matching or custom lock photo)
+    NothingWallpaperBackground(
+      settings = settings,
+      isLockScreen = true,
+      accentColor = accentColor
+    )
 
     Column(
       modifier = Modifier
         .fillMaxSize()
-        .offset { IntOffset(0, dragOffsetY.roundToInt()) }
+        .offset {
+          val safeY = if (dragOffsetY.isNaN()) 0 else dragOffsetY.coerceIn(-1200f, 0f).roundToInt()
+          IntOffset(0, safeY)
+        }
         .padding(horizontal = 24.dp)
         .padding(top = 16.dp, bottom = 28.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -591,13 +587,19 @@ fun NothingLockScreen(
       } else {
         // Notifications list (stacked Nothing cards)
         if (lockSettings.showNotifications && notifications.isNotEmpty()) {
+          val safeNotifications = remember(notifications) {
+            notifications.distinctBy { it.id }
+          }
           LazyColumn(
             modifier = Modifier
               .fillMaxWidth()
               .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
           ) {
-            items(notifications, key = { it.id }) { notif ->
+            itemsIndexed(
+              items = safeNotifications,
+              key = { index, item -> "${item.id}_${item.packageName}_$index" }
+            ) { _, notif ->
               LockNotificationCard(
                 notification = notif,
                 accentColor = accentColor,

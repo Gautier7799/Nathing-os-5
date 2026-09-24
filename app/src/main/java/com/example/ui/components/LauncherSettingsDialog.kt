@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,10 +24,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessibilityNew
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
@@ -33,6 +38,7 @@ import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +62,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
@@ -66,11 +73,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import coil.compose.AsyncImage
 import com.example.model.IconPackStyle
 import com.example.model.LauncherSettings
 import com.example.model.LockClockStyle
 import com.example.model.LockSecurityType
 import com.example.model.LockShortcutType
+import com.example.model.WallpaperTarget
 import com.example.service.SystemIntegrationHelper
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -81,6 +90,7 @@ import com.example.ui.theme.NothingOrange
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.NothingYellow
+import java.io.File
 
 val ACCENT_COLORS = listOf(
   NothingRed,
@@ -89,11 +99,22 @@ val ACCENT_COLORS = listOf(
   NothingYellow
 )
 
-val WALLPAPER_NAMES = listOf(
-  "DOT MATRIX NOIR",
-  "CARBON MATTE",
-  "RED CIRCUIT GLOW",
-  "LIGHT MONOCHROME"
+data class WallpaperChoice(
+  val index: Int,
+  val name: String,
+  val badge: String,
+  val desc: String
+)
+
+val WALLPAPER_CHOICES = listOf(
+  WallpaperChoice(0, "DOT MATRIX NOIR", "SIGNATURE", "Nothing signature white dots grid"),
+  WallpaperChoice(1, "CARBON MATTE", "STEALTH", "Pure deep black Nothing finish"),
+  WallpaperChoice(2, "RED CIRCUIT GLOW", "CYBER", "Red electronic traces & glowing nodes"),
+  WallpaperChoice(3, "LIGHT MONOCHROME", "MINIMAL", "Monochrome high-contrast inverted dots"),
+  WallpaperChoice(4, "NOTHING GLYPH", "ARTWORK", "Phone (2) signature Glyph light geometry"),
+  WallpaperChoice(5, "RED ECLIPSE", "GRADIENT", "Crimson abstract minimalist gradient"),
+  WallpaperChoice(6, "RETRO WIREFRAME", "VECTOR", "Futuristic 3D isometric perspective grid"),
+  WallpaperChoice(7, "CUSTOM GALLERY PHOTO", "GALLERY", "User photo loaded from phone storage")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,6 +122,7 @@ val WALLPAPER_NAMES = listOf(
 fun LauncherSettingsDialog(
   settings: LauncherSettings,
   onUpdateSettings: (LauncherSettings) -> Unit,
+  onPickCustomWallpaper: (android.net.Uri, WallpaperTarget) -> Unit = { _, _ -> },
   onLockScreenNow: () -> Unit,
   onDismiss: () -> Unit,
   accentColor: Color
@@ -111,6 +133,15 @@ fun LauncherSettingsDialog(
 
   // Selected tab: 0 = HOME, 1 = LOCK SCREEN, 2 = THEMES, 3 = PERMISSIONS
   var selectedTab by remember { mutableIntStateOf(1) } // Start on Lock Screen tab as requested
+  var wallpaperTarget by remember { mutableStateOf(WallpaperTarget.BOTH) }
+
+  val photoPickerLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.PickVisualMedia()
+  ) { uri ->
+    if (uri != null) {
+      onPickCustomWallpaper(uri, wallpaperTarget)
+    }
+  }
 
   // Permission statuses
   var isNotificationGranted by remember { mutableStateOf(SystemIntegrationHelper.isNotificationListenerGranted(context)) }
@@ -644,9 +675,207 @@ fun LauncherSettingsDialog(
             }
           }
 
+          Spacer(modifier = Modifier.height(22.dp))
+
+          // Wallpaper Destination Selector
+          Text(
+            text = "APPLY WALLPAPER TO",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(8.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            listOf(
+              WallpaperTarget.HOME to "HOME ONLY",
+              WallpaperTarget.LOCK to "LOCK ONLY",
+              WallpaperTarget.BOTH to "BOTH SCREENS"
+            ).forEach { (target, label) ->
+              val isSelected = wallpaperTarget == target
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(10.dp))
+                  .background(if (isSelected) accentColor else NothingDarkSurface)
+                  .border(1.dp, if (isSelected) accentColor else NothingBorder, RoundedCornerShape(10.dp))
+                  .clickable { wallpaperTarget = target }
+                  .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = label,
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 10.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else NothingGrey
+                )
+              }
+            }
+          }
+
+          Spacer(modifier = Modifier.height(18.dp))
+
+          // Custom Gallery Photo Launcher Button
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .clip(RoundedCornerShape(14.dp))
+              .background(NothingDarkSurface)
+              .border(1.dp, accentColor.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
+              .clickable {
+                photoPickerLauncher.launch(
+                  PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+              }
+              .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              Box(
+                modifier = Modifier
+                  .size(36.dp)
+                  .clip(CircleShape)
+                  .background(accentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+              ) {
+                Icon(
+                  imageVector = Icons.Default.AddPhotoAlternate,
+                  contentDescription = "Pick photo",
+                  tint = accentColor,
+                  modifier = Modifier.size(20.dp)
+                )
+              }
+              Column {
+                Text(
+                  text = "CHOOSE PHOTO FROM GALLERY",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = NothingWhite
+                )
+                Text(
+                  text = "Select any picture from device storage",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 10.sp,
+                  color = NothingGrey
+                )
+              }
+            }
+            Icon(
+              imageVector = Icons.Default.Image,
+              contentDescription = null,
+              tint = accentColor,
+              modifier = Modifier.size(18.dp)
+            )
+          }
+
+          // Active Custom Photo status indicator
+          val activeCustomUri = when (wallpaperTarget) {
+            WallpaperTarget.HOME -> settings.customWallpaperUri
+            WallpaperTarget.LOCK -> settings.customLockScreenWallpaperUri ?: settings.customWallpaperUri
+            WallpaperTarget.BOTH -> settings.customWallpaperUri ?: settings.customLockScreenWallpaperUri
+          }
+          if (!activeCustomUri.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(NothingElevated)
+                .padding(10.dp),
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+              val photoFile = File(activeCustomUri)
+              AsyncImage(
+                model = if (photoFile.exists()) photoFile else activeCustomUri,
+                contentDescription = "Wallpaper preview",
+                modifier = Modifier
+                  .size(42.dp)
+                  .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+              )
+              Column(modifier = Modifier.weight(1f)) {
+                Text(
+                  text = "ACTIVE CUSTOM PHOTO",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = accentColor
+                )
+                Text(
+                  text = "Wallpaper photo active on device",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 10.sp,
+                  color = NothingGrey
+                )
+              }
+            }
+          }
+
           Spacer(modifier = Modifier.height(20.dp))
 
-          // Wallpaper Selector
+          // Dimming Scrim
+          Text(
+            text = "PHOTO DIMMING / CONTRAST",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+            text = "Darkens custom photos so icons and clock remain sharp",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 10.sp,
+            color = NothingGrey
+          )
+          Spacer(modifier = Modifier.height(8.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            listOf(
+              0 to "OFF (0%)",
+              25 to "LIGHT (25%)",
+              40 to "MEDIUM (40%)",
+              60 to "DEEP (60%)"
+            ).forEach { (pct, label) ->
+              val isSelected = settings.wallpaperDimPct == pct
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(8.dp))
+                  .background(if (isSelected) accentColor else NothingDarkSurface)
+                  .border(1.dp, if (isSelected) accentColor else NothingBorder, RoundedCornerShape(8.dp))
+                  .clickable { onUpdateSettings(settings.copy(wallpaperDimPct = pct)) }
+                  .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = label,
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 9.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else NothingGrey
+                )
+              }
+            }
+          }
+
+          Spacer(modifier = Modifier.height(24.dp))
+
+          // Nothing OS 5 Wallpapers List
           Text(
             text = "NOTHING OS 5 WALLPAPERS",
             fontFamily = FontFamily.Monospace,
@@ -657,30 +886,77 @@ fun LauncherSettingsDialog(
           )
           Spacer(modifier = Modifier.height(8.dp))
           Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            WALLPAPER_NAMES.forEachIndexed { idx, name ->
+            WALLPAPER_CHOICES.forEach { choice ->
+              val isCurrent = when (wallpaperTarget) {
+                WallpaperTarget.HOME -> settings.wallpaperIndex == choice.index
+                WallpaperTarget.LOCK -> if (settings.lockScreenWallpaperIndex >= 0) settings.lockScreenWallpaperIndex == choice.index else settings.wallpaperIndex == choice.index
+                WallpaperTarget.BOTH -> settings.wallpaperIndex == choice.index && (settings.lockScreenWallpaperIndex < 0 || settings.lockScreenWallpaperIndex == choice.index)
+              }
+
               Row(
                 modifier = Modifier
                   .fillMaxWidth()
                   .clip(RoundedCornerShape(12.dp))
-                  .background(if (settings.wallpaperIndex == idx) NothingElevated else NothingDarkSurface)
+                  .background(if (isCurrent) NothingElevated else NothingDarkSurface)
                   .border(
                     width = 1.dp,
-                    color = if (settings.wallpaperIndex == idx) accentColor else NothingBorder,
+                    color = if (isCurrent) accentColor else NothingBorder,
                     shape = RoundedCornerShape(12.dp)
                   )
-                  .clickable { onUpdateSettings(settings.copy(wallpaperIndex = idx)) }
+                  .clickable {
+                    if (choice.index == 7 && (settings.customWallpaperUri == null && settings.customLockScreenWallpaperUri == null)) {
+                      photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                      )
+                    } else {
+                      when (wallpaperTarget) {
+                        WallpaperTarget.HOME -> onUpdateSettings(settings.copy(wallpaperIndex = choice.index))
+                        WallpaperTarget.LOCK -> onUpdateSettings(settings.copy(lockScreenWallpaperIndex = choice.index))
+                        WallpaperTarget.BOTH -> onUpdateSettings(settings.copy(wallpaperIndex = choice.index, lockScreenWallpaperIndex = choice.index))
+                      }
+                    }
+                  }
                   .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
               ) {
-                Text(
-                  text = name,
-                  fontFamily = FontFamily.Monospace,
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = NothingWhite
-                )
-                if (settings.wallpaperIndex == idx) {
+                Column(modifier = Modifier.weight(1f)) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                  ) {
+                    Text(
+                      text = choice.name,
+                      fontFamily = FontFamily.Monospace,
+                      fontSize = 11.sp,
+                      fontWeight = FontWeight.Bold,
+                      color = NothingWhite
+                    )
+                    Box(
+                      modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(accentColor.copy(alpha = 0.2f))
+                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                    ) {
+                      Text(
+                        text = choice.badge,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = accentColor
+                      )
+                    }
+                  }
+                  Spacer(modifier = Modifier.height(2.dp))
+                  Text(
+                    text = choice.desc,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    color = NothingGrey
+                  )
+                }
+
+                if (isCurrent) {
                   Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Active",

@@ -177,6 +177,7 @@ fun NothingLauncherApp(
       LauncherSettingsDialog(
         settings = settings,
         onUpdateSettings = { viewModel.updateSettings(it) },
+        onPickCustomWallpaper = { uri, target -> viewModel.setCustomWallpaper(uri, target) },
         onLockScreenNow = { viewModel.lockLauncherScreen() },
         onDismiss = { isSettingsOpen = false },
         accentColor = accentColor

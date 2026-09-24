@@ -194,14 +194,16 @@ private fun drawableToBitmap(drawable: Drawable, applyGrayscale: Boolean, isDark
     val matrix = ColorMatrix().apply {
       setSaturation(0f)
       if (!isDark) {
-        // Theme Jour (Light): Invert & boost contrast so light/white symbols become sharp deep black!
-        val invertAndContrast = ColorMatrix(floatArrayOf(
-          -1.4f, 0f, 0f, 0f, 245f,
-          0f, -1.4f, 0f, 0f, 245f,
-          0f, 0f, -1.4f, 0f, 245f,
+        // Theme Jour (Light Mode):
+        // Keep icons bright, crisp, with full luminance and clearly visible contours!
+        // No heavy inversion or crushing to pure black.
+        val lightBoost = ColorMatrix(floatArrayOf(
+          1.15f, 0f, 0f, 0f, 25f,
+          0f, 1.15f, 0f, 0f, 25f,
+          0f, 0f, 1.15f, 0f, 25f,
           0f, 0f, 0f, 1f, 0f
         ))
-        postConcat(invertAndContrast)
+        postConcat(lightBoost)
       } else {
         // Theme Nuit (Dark): Boost contrast for sharp white/grey glyphs
         val contrast = 1.25f

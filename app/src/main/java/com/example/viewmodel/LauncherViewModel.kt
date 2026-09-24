@@ -26,6 +26,7 @@ import com.example.model.LauncherSettings
 import com.example.model.NosWidgetPortType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
+import com.example.service.SystemLocationHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,17 +65,27 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
   val folders: StateFlow<List<FolderItem>> = _folders.asStateFlow()
 
   // Time & Date
-  private val _currentTime = MutableStateFlow("12:00")
+  private val _currentTime = MutableStateFlow(
+    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
+  )
   val currentTime: StateFlow<String> = _currentTime.asStateFlow()
 
-  private val _currentSeconds = MutableStateFlow("00")
+  private val _currentSeconds = MutableStateFlow(
+    SimpleDateFormat("ss", Locale.getDefault()).format(Calendar.getInstance().time)
+  )
   val currentSeconds: StateFlow<String> = _currentSeconds.asStateFlow()
 
-  private val _currentDate = MutableStateFlow("WED 23 SEP")
+  private val _currentDate = MutableStateFlow(
+    SimpleDateFormat("EEE, d MMM", Locale.US).format(Calendar.getInstance().time).uppercase(Locale.US)
+  )
   val currentDate: StateFlow<String> = _currentDate.asStateFlow()
 
-  // Weather
-  private val _weather = MutableStateFlow(WeatherInfo(tempC = 23, condition = "SUNNY", city = "LONDON"))
+  // Weather - Auto-detected from Android Location / System Region
+  private val _weather = MutableStateFlow(
+    SystemLocationHelper.getEstimatedWeatherForLocation(
+      SystemLocationHelper.getAutoDetectedCity(application)
+    )
+  )
   val weather: StateFlow<WeatherInfo> = _weather.asStateFlow()
 
   // Quick Toggles
@@ -397,6 +408,21 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         highC = nextTemp + 3,
         lowC = nextTemp - 5
       )
+    }
+  }
+
+  fun refreshLocationWeather() {
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      val city = SystemLocationHelper.getAutoDetectedCity(context)
+      val updated = SystemLocationHelper.getEstimatedWeatherForLocation(city)
+      _weather.update {
+        it.copy(
+          city = city,
+          tempC = updated.tempC,
+          highC = updated.highC,
+          lowC = updated.lowC
+        )
+      }
     }
   }
 

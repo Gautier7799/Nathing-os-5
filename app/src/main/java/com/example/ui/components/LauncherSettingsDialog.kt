@@ -48,16 +48,24 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.example.model.NosWidgetPortType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -271,8 +279,8 @@ fun LauncherSettingsDialog(
         ) { selectedTab = 3 }
 
         TabButton(
-          title = "PORTS",
-          icon = Icons.Default.Extension,
+          title = "WIDGETS",
+          icon = Icons.Default.Widgets,
           selected = selectedTab == 4,
           accentColor = accentColor,
           modifier = Modifier.weight(1f)
@@ -1250,11 +1258,12 @@ fun LauncherSettingsDialog(
           }
         }
 
-        // TAB 4: PIXEL & ANDROID 17 PORTS INTEGRATION
+        // TAB 4: NOTHING OS SYSTEM WIDGET PORTS SUITE
         4 -> {
-          PixelPortsSettingsTab(
-            accentColor = accentColor,
-            context = context
+          NothingWidgetsPortSettingsTab(
+            settings = settings,
+            onUpdateSettings = onUpdateSettings,
+            accentColor = accentColor
           )
         }
       }

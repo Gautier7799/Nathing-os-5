@@ -76,6 +76,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.example.model.FitnessStats
 import com.example.model.LauncherSettings
 import com.example.model.LockClockStyle
@@ -84,7 +85,9 @@ import com.example.model.LockSecurityType
 import com.example.model.LockShortcutType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
+import com.example.service.SystemPortHelper
 import com.example.ui.components.ACCENT_COLORS
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -116,6 +119,8 @@ fun NothingLockScreen(
     ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
   }
 
+  val theme = LocalLauncherTheme.current
+  val context = LocalContext.current
   val lockSettings = settings.lockScreen
   val scope = rememberCoroutineScope()
 
@@ -142,7 +147,7 @@ fun NothingLockScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(NothingBlack)
+      .background(theme.background)
       .pointerInput(lockSettings.securityType) {
         if (lockSettings.securityType == LockSecurityType.SWIPE || !showPinKeypad) {
           detectVerticalDragGestures(
@@ -210,7 +215,7 @@ fun NothingLockScreen(
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite,
+            color = theme.textPrimary,
             letterSpacing = 2.sp
           )
         }
@@ -222,7 +227,7 @@ fun NothingLockScreen(
           Icon(
             imageVector = Icons.Default.Wifi,
             contentDescription = "WiFi",
-            tint = NothingWhite,
+            tint = theme.textPrimary,
             modifier = Modifier.size(14.dp)
           )
           Row(
@@ -234,12 +239,12 @@ fun NothingLockScreen(
               fontFamily = FontFamily.Monospace,
               fontSize = 11.sp,
               fontWeight = FontWeight.Bold,
-              color = NothingWhite
+              color = theme.textPrimary
             )
             Icon(
               imageVector = Icons.Default.Bolt,
               contentDescription = "Battery",
-              tint = if (toggles.isCharging) accentColor else NothingWhite,
+              tint = if (toggles.isCharging) accentColor else theme.textPrimary,
               modifier = Modifier.size(14.dp)
             )
           }
@@ -253,14 +258,16 @@ fun NothingLockScreen(
         LockClockStyle.DOT_MATRIX_BIG -> {
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { SystemPortHelper.launchPixelClock(context) }
           ) {
             Text(
               text = currentTime,
               fontFamily = FontFamily.Monospace,
               fontSize = 72.sp,
               fontWeight = FontWeight.Black,
-              color = NothingWhite,
+              color = theme.textPrimary,
               letterSpacing = 4.sp
             )
             Spacer(modifier = Modifier.height(6.dp))
@@ -281,14 +288,16 @@ fun NothingLockScreen(
           val min = parts.getOrNull(1) ?: "00"
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { SystemPortHelper.launchPixelClock(context) }
           ) {
             Text(
               text = hour,
               fontFamily = FontFamily.Monospace,
               fontSize = 76.sp,
               fontWeight = FontWeight.Black,
-              color = NothingWhite,
+              color = theme.textPrimary,
               lineHeight = 72.sp
             )
             Text(
@@ -305,7 +314,7 @@ fun NothingLockScreen(
               fontFamily = FontFamily.Monospace,
               fontSize = 13.sp,
               fontWeight = FontWeight.Medium,
-              color = NothingGrey,
+              color = theme.textSecondary,
               letterSpacing = 2.sp
             )
           }
@@ -314,16 +323,18 @@ fun NothingLockScreen(
         LockClockStyle.MINIMAL_ANALOG -> {
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { SystemPortHelper.launchPixelClock(context) }
           ) {
-            NothingAnalogLockClock(accentColor = accentColor, modifier = Modifier.size(160.dp))
+            NothingAnalogLockClock(accentColor = accentColor, isDark = theme.isDark, modifier = Modifier.size(160.dp))
             Spacer(modifier = Modifier.height(14.dp))
             Text(
               text = "$currentTime  •  $currentDate",
               fontFamily = FontFamily.Monospace,
               fontSize = 13.sp,
               fontWeight = FontWeight.Bold,
-              color = NothingWhite,
+              color = theme.textPrimary,
               letterSpacing = 2.sp
             )
           }
@@ -332,7 +343,9 @@ fun NothingLockScreen(
         LockClockStyle.CLASSIC_DIGITAL -> {
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { SystemPortHelper.launchPixelClock(context) }
           ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
@@ -349,14 +362,14 @@ fun NothingLockScreen(
                 fontFamily = FontFamily.Monospace,
                 fontSize = 54.sp,
                 fontWeight = FontWeight.Bold,
-                color = NothingWhite
+                color = theme.textPrimary
               )
             }
             Text(
               text = currentDate,
               fontFamily = FontFamily.Monospace,
               fontSize = 13.sp,
-              color = NothingGrey,
+              color = theme.textSecondary,
               letterSpacing = 2.sp
             )
           }
@@ -372,12 +385,13 @@ fun NothingLockScreen(
           horizontalArrangement = Arrangement.Center,
           verticalAlignment = Alignment.CenterVertically
         ) {
-          // Weather Pill
+          // Weather Pill (Tap to open Pixel Weather Port)
           Row(
             modifier = Modifier
               .clip(RoundedCornerShape(20.dp))
-              .background(NothingDarkSurface)
-              .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+              .background(theme.surface)
+              .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+              .clickable { SystemPortHelper.launchPixelWeather(context) }
               .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -393,18 +407,19 @@ fun NothingLockScreen(
               fontFamily = FontFamily.Monospace,
               fontSize = 11.sp,
               fontWeight = FontWeight.Bold,
-              color = NothingWhite
+              color = theme.textPrimary
             )
           }
 
           Spacer(modifier = Modifier.width(8.dp))
 
-          // Fitness Pill
+          // Fitness Pill (Tap to open Health Connect / Google Fit Port)
           Row(
             modifier = Modifier
               .clip(RoundedCornerShape(20.dp))
-              .background(NothingDarkSurface)
-              .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+              .background(theme.surface)
+              .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+              .clickable { SystemPortHelper.launchHealthConnect(context) }
               .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -412,7 +427,7 @@ fun NothingLockScreen(
             Icon(
               imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
               contentDescription = "Steps",
-              tint = NothingWhite,
+              tint = theme.textPrimary,
               modifier = Modifier.size(14.dp)
             )
             Text(
@@ -420,7 +435,7 @@ fun NothingLockScreen(
               fontFamily = FontFamily.Monospace,
               fontSize = 11.sp,
               fontWeight = FontWeight.Bold,
-              color = NothingWhite
+              color = theme.textPrimary
             )
           }
         }
@@ -442,7 +457,7 @@ fun NothingLockScreen(
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = if (pinError) NothingWhite else NothingGrey,
+            color = if (pinError) Color(0xFFD71921) else theme.textSecondary,
             letterSpacing = 2.sp
           )
 
@@ -493,8 +508,8 @@ fun NothingLockScreen(
                     modifier = Modifier
                       .size(56.dp)
                       .clip(CircleShape)
-                      .background(NothingDarkSurface)
-                      .border(1.dp, NothingBorder, CircleShape)
+                      .background(theme.surface)
+                      .border(1.dp, theme.border, CircleShape)
                       .clickable {
                         pinError = false
                         when (key) {
@@ -533,7 +548,7 @@ fun NothingLockScreen(
                       Icon(
                         imageVector = Icons.Default.Backspace,
                         contentDescription = "Delete",
-                        tint = NothingWhite,
+                        tint = theme.textPrimary,
                         modifier = Modifier.size(18.dp)
                       )
                     } else if (key == "OK") {
@@ -549,7 +564,7 @@ fun NothingLockScreen(
                         fontFamily = FontFamily.Monospace,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = NothingWhite
+                        color = theme.textPrimary
                       )
                     }
                   }
@@ -617,7 +632,7 @@ fun NothingLockScreen(
           modifier = Modifier
             .padding(bottom = 12.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(NothingDarkSurface.copy(alpha = 0.85f))
+            .background(theme.surface.copy(alpha = 0.9f))
             .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
             .clickable {
               if (lockSettings.securityType == LockSecurityType.PIN) {
@@ -640,7 +655,7 @@ fun NothingLockScreen(
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite.copy(alpha = arrowAlpha),
+            color = theme.textPrimary.copy(alpha = arrowAlpha),
             letterSpacing = 1.5.sp
           )
         }
@@ -659,10 +674,10 @@ fun NothingLockScreen(
           modifier = Modifier
             .size(50.dp)
             .clip(CircleShape)
-            .background(if (toggles.isTorchOn) accentColor else NothingDarkSurface)
+            .background(if (toggles.isTorchOn) accentColor else theme.surface)
             .border(
               width = 1.dp,
-              color = if (toggles.isTorchOn) accentColor else NothingBorder,
+              color = if (toggles.isTorchOn) accentColor else theme.border,
               shape = CircleShape
             )
             .clickable {
@@ -677,7 +692,7 @@ fun NothingLockScreen(
           Icon(
             imageVector = if (toggles.isTorchOn) Icons.Default.FlashlightOn else Icons.Default.FlashlightOff,
             contentDescription = "Torch Shortcut",
-            tint = if (toggles.isTorchOn) NothingBlack else NothingWhite,
+            tint = if (toggles.isTorchOn) NothingBlack else theme.textPrimary,
             modifier = Modifier.size(20.dp)
           )
         }
@@ -687,7 +702,7 @@ fun NothingLockScreen(
           text = lockSettings.customOwnerInfo,
           fontFamily = FontFamily.Monospace,
           fontSize = 9.sp,
-          color = NothingGrey,
+          color = theme.textSecondary,
           textAlign = TextAlign.Center,
           modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
           maxLines = 1
@@ -698,8 +713,8 @@ fun NothingLockScreen(
           modifier = Modifier
             .size(50.dp)
             .clip(CircleShape)
-            .background(NothingDarkSurface)
-            .border(1.dp, NothingBorder, CircleShape)
+            .background(theme.surface)
+            .border(1.dp, theme.border, CircleShape)
             .clickable {
               onLaunchShortcut(lockSettings.rightShortcut)
             },
@@ -708,7 +723,7 @@ fun NothingLockScreen(
           Icon(
             imageVector = Icons.Default.CameraAlt,
             contentDescription = "Camera Shortcut",
-            tint = NothingWhite,
+            tint = theme.textPrimary,
             modifier = Modifier.size(20.dp)
           )
         }
@@ -720,6 +735,7 @@ fun NothingLockScreen(
 @Composable
 private fun NothingAnalogLockClock(
   accentColor: Color,
+  isDark: Boolean,
   modifier: Modifier = Modifier
 ) {
   val calendar = Calendar.getInstance()
@@ -738,7 +754,7 @@ private fun NothingAnalogLockClock(
       val x = center.x + (radius * cos(angle)).toFloat()
       val y = center.y + (radius * sin(angle)).toFloat()
       drawCircle(
-        color = if (i % 3 == 0) Color.White else Color.Gray,
+        color = if (isDark) (if (i % 3 == 0) Color.White else Color.Gray) else (if (i % 3 == 0) Color(0xFF111111) else Color(0xFF888888)),
         radius = dotRadius,
         center = Offset(x, y)
       )
@@ -748,7 +764,7 @@ private fun NothingAnalogLockClock(
     val hourAngle = Math.toRadians(((hour % 12 + minute / 60f) * 30 - 90).toDouble())
     val hourHandLength = radius * 0.5f
     drawLine(
-      color = Color.White,
+      color = if (isDark) Color.White else Color(0xFF111111),
       start = center,
       end = Offset(
         center.x + (hourHandLength * cos(hourAngle)).toFloat(),
@@ -762,7 +778,7 @@ private fun NothingAnalogLockClock(
     val minuteAngle = Math.toRadians(((minute + second / 60f) * 6 - 90).toDouble())
     val minuteHandLength = radius * 0.75f
     drawLine(
-      color = Color.White,
+      color = if (isDark) Color.White else Color(0xFF111111),
       start = center,
       end = Offset(
         center.x + (minuteHandLength * cos(minuteAngle)).toFloat(),
@@ -797,12 +813,14 @@ private fun LockNotificationCard(
   accentColor: Color,
   onDismiss: () -> Unit
 ) {
+  val theme = LocalLauncherTheme.current
+
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(16.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(16.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(16.dp))
       .padding(14.dp),
     verticalAlignment = Alignment.Top,
     horizontalArrangement = Arrangement.SpaceBetween
@@ -815,7 +833,7 @@ private fun LockNotificationCard(
         modifier = Modifier
           .size(32.dp)
           .clip(CircleShape)
-          .background(NothingElevated),
+          .background(theme.elevated),
         contentAlignment = Alignment.Center
       ) {
         Icon(
@@ -842,7 +860,7 @@ private fun LockNotificationCard(
             text = "• ${notification.timeFormatted}",
             fontFamily = FontFamily.Monospace,
             fontSize = 10.sp,
-            color = NothingGrey
+            color = theme.textSecondary
           )
         }
         Spacer(modifier = Modifier.height(2.dp))
@@ -851,7 +869,7 @@ private fun LockNotificationCard(
           fontFamily = FontFamily.Monospace,
           fontSize = 12.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingWhite
+          color = theme.textPrimary
         )
         if (notification.text.isNotEmpty()) {
           Spacer(modifier = Modifier.height(2.dp))
@@ -859,7 +877,7 @@ private fun LockNotificationCard(
             text = notification.text,
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
-            color = NothingGrey,
+            color = theme.textSecondary,
             lineHeight = 14.sp
           )
         }
@@ -869,7 +887,7 @@ private fun LockNotificationCard(
     Icon(
       imageVector = Icons.Default.Close,
       contentDescription = "Dismiss",
-      tint = NothingGrey,
+      tint = theme.textSecondary,
       modifier = Modifier
         .size(16.dp)
         .clickable { onDismiss() }

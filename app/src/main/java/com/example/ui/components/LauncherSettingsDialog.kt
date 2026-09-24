@@ -23,13 +23,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotDisturb
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
@@ -38,6 +43,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Visibility
@@ -86,6 +92,7 @@ import com.example.model.LockSecurityType
 import com.example.model.LockShortcutType
 import com.example.model.WallpaperTarget
 import com.example.service.SystemIntegrationHelper
+import com.example.service.SystemPortHelper
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -222,7 +229,7 @@ fun LauncherSettingsDialog(
 
       Spacer(modifier = Modifier.height(16.dp))
 
-      // Tab selector row
+      // Tab selector row (5 Tabs)
       Row(
         modifier = Modifier
           .fillMaxWidth()
@@ -262,6 +269,14 @@ fun LauncherSettingsDialog(
           accentColor = accentColor,
           modifier = Modifier.weight(1f)
         ) { selectedTab = 3 }
+
+        TabButton(
+          title = "PORTS",
+          icon = Icons.Default.Extension,
+          selected = selectedTab == 4,
+          accentColor = accentColor,
+          modifier = Modifier.weight(1f)
+        ) { selectedTab = 4 }
       }
 
       Spacer(modifier = Modifier.height(20.dp))
@@ -1234,6 +1249,14 @@ fun LauncherSettingsDialog(
             }
           }
         }
+
+        // TAB 4: PIXEL & ANDROID 17 PORTS INTEGRATION
+        4 -> {
+          PixelPortsSettingsTab(
+            accentColor = accentColor,
+            context = context
+          )
+        }
       }
 
       Spacer(modifier = Modifier.height(30.dp))
@@ -1287,6 +1310,7 @@ private fun SettingsSwitchRow(
   accentColor: Color,
   onCheckedChange: (Boolean) -> Unit
 ) {
+  val theme = LocalLauncherTheme.current
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1298,22 +1322,22 @@ private fun SettingsSwitchRow(
         fontFamily = FontFamily.Monospace,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
-        color = NothingWhite
+        color = theme.textPrimary
       )
       Text(
         text = subtitle,
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp,
-        color = NothingGrey
+        color = theme.textSecondary
       )
     }
     Switch(
       checked = checked,
       onCheckedChange = onCheckedChange,
       colors = SwitchDefaults.colors(
-        checkedThumbColor = NothingWhite,
+        checkedThumbColor = if (accentColor == Color.White) Color.Black else Color.White,
         checkedTrackColor = accentColor,
-        uncheckedTrackColor = NothingElevated
+        uncheckedTrackColor = theme.elevated
       )
     )
   }
@@ -1329,14 +1353,15 @@ private fun PermissionIntegrationCard(
   accentColor: Color,
   onClick: () -> Unit
 ) {
+  val theme = LocalLauncherTheme.current
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(12.dp))
-      .background(NothingDarkSurface)
+      .background(theme.surface)
       .border(
         width = 1.dp,
-        color = if (isGranted) Color(0xFF00E676).copy(alpha = 0.35f) else NothingBorder,
+        color = if (isGranted) Color(0xFF00E676).copy(alpha = 0.35f) else theme.border,
         shape = RoundedCornerShape(12.dp)
       )
       .clickable { onClick() }
@@ -1353,13 +1378,13 @@ private fun PermissionIntegrationCard(
         modifier = Modifier
           .size(32.dp)
           .clip(CircleShape)
-          .background(if (isGranted) Color(0xFF00E676).copy(alpha = 0.15f) else NothingElevated),
+          .background(if (isGranted) Color(0xFF00E676).copy(alpha = 0.15f) else theme.elevated),
         contentAlignment = Alignment.Center
       ) {
         Icon(
           imageVector = icon,
           contentDescription = title,
-          tint = if (isGranted) Color(0xFF00E676) else NothingGrey,
+          tint = if (isGranted) Color(0xFF00E676) else theme.textSecondary,
           modifier = Modifier.size(16.dp)
         )
       }
@@ -1370,13 +1395,13 @@ private fun PermissionIntegrationCard(
           fontFamily = FontFamily.Monospace,
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingWhite
+          color = theme.textPrimary
         )
         Text(
           text = description,
           fontFamily = FontFamily.Monospace,
           fontSize = 9.sp,
-          color = NothingGrey,
+          color = theme.textSecondary,
           lineHeight = 12.sp
         )
       }
@@ -1397,8 +1422,222 @@ private fun PermissionIntegrationCard(
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
-        color = if (isGranted) Color(0xFF00E676) else NothingWhite
+        color = if (isGranted) Color(0xFF00E676) else (if (accentColor == Color.White) Color.Black else Color.White)
       )
+    }
+  }
+}
+
+@Composable
+private fun PixelPortsSettingsTab(
+  accentColor: Color,
+  context: Context
+) {
+  val theme = LocalLauncherTheme.current
+
+  Column(
+    modifier = Modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(14.dp)
+  ) {
+    // Header Banner
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(16.dp))
+        .background(theme.surface)
+        .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+        .padding(16.dp)
+    ) {
+      Column {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Default.Android,
+            contentDescription = null,
+            tint = accentColor,
+            modifier = Modifier.size(20.dp)
+          )
+          Text(
+            text = "PIXEL ANDROID 17 PORTS",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary,
+            letterSpacing = 1.sp
+          )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+          text = "دمج وتكامل تطبيقات Pixel الرسمية ومنافذ Android 17 (الطقس، الساعة، التقويم، الصحة) مباشرة مع واجهات Nothing OS 5.0.",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 10.sp,
+          color = theme.textSecondary,
+          lineHeight = 14.sp
+        )
+      }
+    }
+
+    // 1. Pixel Weather Port
+    val hasWeather = remember { SystemPortHelper.isAppInstalled(context, "com.google.android.apps.weather") }
+    PixelPortItemCard(
+      title = "PIXEL WEATHER PORT",
+      subtitle = if (hasWeather) "Pixel 9/10 Standalone Port (Active)" else "Google Weather / Dynamic Web Radar",
+      badge = if (hasWeather) "ACTIVE PORT" else "NATIVE FALLBACK",
+      isInstalled = hasWeather,
+      icon = Icons.Default.Cloud,
+      accentColor = accentColor,
+      onLaunch = { SystemPortHelper.launchPixelWeather(context) }
+    )
+
+    // 2. Pixel Clock Port
+    val hasClock = remember {
+      SystemPortHelper.isAppInstalled(context, "com.google.android.deskclock") ||
+        SystemPortHelper.isAppInstalled(context, "com.android.deskclock")
+    }
+    PixelPortItemCard(
+      title = "PIXEL CLOCK & ALARMS",
+      subtitle = if (hasClock) "Pixel Material You DeskClock (Detected)" else "System Clock & Timers",
+      badge = if (hasClock) "PIXEL READY" else "SYSTEM DEFAULT",
+      isInstalled = hasClock,
+      icon = Icons.Default.Schedule,
+      accentColor = accentColor,
+      onLaunch = { SystemPortHelper.launchPixelClock(context) }
+    )
+
+    // 3. Pixel Calendar Port
+    val hasCalendar = remember { SystemPortHelper.isAppInstalled(context, "com.google.android.calendar") }
+    PixelPortItemCard(
+      title = "PIXEL CALENDAR PORT",
+      subtitle = if (hasCalendar) "Google Pixel Calendar (Installed)" else "Android 17 Event Provider",
+      badge = if (hasCalendar) "SYNCED" else "READY",
+      isInstalled = hasCalendar,
+      icon = Icons.Default.CalendarToday,
+      accentColor = accentColor,
+      onLaunch = { SystemPortHelper.launchPixelCalendar(context) }
+    )
+
+    // 4. Android Health Connect Port
+    val hasHealth = remember {
+      SystemPortHelper.isAppInstalled(context, "com.google.android.apps.healthdata") ||
+        SystemPortHelper.isAppInstalled(context, "com.google.android.apps.fitness")
+    }
+    PixelPortItemCard(
+      title = "HEALTH CONNECT PORT",
+      subtitle = if (hasHealth) "Google Health Connect / Fit Core" else "Android 17 Step & Sensor Telemetry",
+      badge = if (hasHealth) "INTEGRATED" else "SYSTEM TELEMETRY",
+      isInstalled = hasHealth,
+      icon = Icons.AutoMirrored.Filled.DirectionsRun,
+      accentColor = accentColor,
+      onLaunch = { SystemPortHelper.launchHealthConnect(context) }
+    )
+  }
+}
+
+@Composable
+private fun PixelPortItemCard(
+  title: String,
+  subtitle: String,
+  badge: String,
+  isInstalled: Boolean,
+  icon: ImageVector,
+  accentColor: Color,
+  onLaunch: () -> Unit
+) {
+  val theme = LocalLauncherTheme.current
+
+  Box(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(14.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(14.dp))
+      .clickable { onLaunch() }
+      .padding(14.dp)
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+      Row(
+        modifier = Modifier.weight(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+      ) {
+        Box(
+          modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(if (isInstalled) Color(0xFF00E676).copy(alpha = 0.15f) else theme.elevated),
+          contentAlignment = Alignment.Center
+        ) {
+          Icon(
+            imageVector = icon,
+            contentDescription = title,
+            tint = if (isInstalled) Color(0xFF00E676) else accentColor,
+            modifier = Modifier.size(20.dp)
+          )
+        }
+
+        Column {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+          ) {
+            Text(
+              text = title,
+              fontFamily = FontFamily.Monospace,
+              fontSize = 11.sp,
+              fontWeight = FontWeight.Bold,
+              color = theme.textPrimary
+            )
+            Box(
+              modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (isInstalled) Color(0xFF00E676).copy(alpha = 0.2f) else theme.elevated)
+                .padding(horizontal = 5.dp, vertical = 2.dp)
+            ) {
+              Text(
+                text = badge,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isInstalled) Color(0xFF00E676) else theme.textSecondary
+              )
+            }
+          }
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+            text = subtitle,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 9.sp,
+            color = theme.textSecondary,
+            lineHeight = 12.sp
+          )
+        }
+      }
+
+      Spacer(modifier = Modifier.width(8.dp))
+
+      Button(
+        onClick = onLaunch,
+        colors = ButtonDefaults.buttonColors(
+          containerColor = accentColor,
+          contentColor = if (accentColor == Color.White) Color.Black else Color.White
+        ),
+        shape = RoundedCornerShape(8.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+        modifier = Modifier.height(34.dp)
+      ) {
+        Text(
+          text = "TEST",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 10.sp,
+          fontWeight = FontWeight.Bold
+        )
+      }
     }
   }
 }

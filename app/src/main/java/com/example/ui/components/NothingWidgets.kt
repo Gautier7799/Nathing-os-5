@@ -84,7 +84,8 @@ fun NothingClockWidget(
   date: String,
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed,
-  onToggleStyle: () -> Unit = {}
+  onToggleStyle: () -> Unit = {},
+  onOpenClockPort: () -> Unit = {}
 ) {
   val theme = LocalLauncherTheme.current
   val digitColor = if (theme.isDark) NothingWhite else Color(0xFF111111)
@@ -95,7 +96,9 @@ fun NothingClockWidget(
       .clip(RoundedCornerShape(24.dp))
       .background(theme.surface)
       .border(1.dp, theme.border, RoundedCornerShape(24.dp))
-      .clickable { onToggleStyle() }
+      .clickable {
+        onOpenClockPort()
+      }
       .padding(horizontal = 20.dp, vertical = 18.dp)
       .testTag("clock_widget")
   ) {
@@ -114,13 +117,15 @@ fun NothingClockWidget(
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
           color = theme.textSecondary,
-          letterSpacing = 1.sp
+          letterSpacing = 1.sp,
+          modifier = Modifier.clickable { onToggleStyle() }
         )
         Box(
           modifier = Modifier
             .size(8.dp)
             .clip(CircleShape)
             .background(accentColor)
+            .clickable { onToggleStyle() }
         )
       }
 
@@ -160,7 +165,8 @@ fun NothingWeatherWidget(
   weather: WeatherInfo,
   onToggleCondition: () -> Unit,
   modifier: Modifier = Modifier,
-  accentColor: Color = NothingRed
+  accentColor: Color = NothingRed,
+  onOpenWeatherPort: () -> Unit = {}
 ) {
   val theme = LocalLauncherTheme.current
 
@@ -169,7 +175,7 @@ fun NothingWeatherWidget(
       .clip(RoundedCornerShape(24.dp))
       .background(theme.surface)
       .border(1.dp, theme.border, RoundedCornerShape(24.dp))
-      .clickable { onToggleCondition() }
+      .clickable { onOpenWeatherPort() }
       .padding(16.dp)
       .testTag("weather_widget")
   ) {
@@ -191,7 +197,9 @@ fun NothingWeatherWidget(
           imageVector = if (weather.condition == "SUNNY") Icons.Default.WbSunny else Icons.Default.WbCloudy,
           contentDescription = "Weather condition",
           tint = if (weather.condition == "SUNNY") accentColor else theme.textPrimary,
-          modifier = Modifier.size(18.dp)
+          modifier = Modifier
+            .size(18.dp)
+            .clickable { onToggleCondition() }
         )
       }
 

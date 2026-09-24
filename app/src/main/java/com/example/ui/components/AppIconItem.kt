@@ -109,8 +109,8 @@ fun AppIconItem(
       contentAlignment = Alignment.Center
     ) {
       if (app.icon != null) {
-        val bitmap = remember(app.icon, iconPack) {
-          drawableToBitmap(app.icon, iconPack == IconPackStyle.MONOCHROME)
+        val bitmap = remember(app.icon, iconPack, isDark) {
+          drawableToBitmap(app.icon, iconPack == IconPackStyle.MONOCHROME, isDark)
         }
         Image(
           bitmap = bitmap.asImageBitmap(),
@@ -125,7 +125,7 @@ fun AppIconItem(
         Icon(
           imageVector = iconVector,
           contentDescription = app.label,
-          tint = if (!isDark) Color(0xFF161616) else (if (iconPack == IconPackStyle.MONOCHROME) NothingWhite else accentColor),
+          tint = if (!isDark) Color(0xFF0A0A0A) else (if (iconPack == IconPackStyle.MONOCHROME) NothingWhite else accentColor),
           modifier = Modifier.size(iconSize * 0.55f)
         )
       }
@@ -138,7 +138,7 @@ fun AppIconItem(
             .padding(2.dp)
             .clip(CircleShape)
             .background(accentColor)
-            .border(1.dp, NothingBlack, CircleShape)
+            .border(1.dp, if (isDark) NothingBlack else Color.White, CircleShape)
             .padding(horizontal = if (app.notificationCount > 1) 4.dp else 0.dp),
           contentAlignment = Alignment.Center
         ) {
@@ -183,7 +183,7 @@ fun AppIconItem(
   }
 }
 
-private fun drawableToBitmap(drawable: Drawable, applyGrayscale: Boolean): Bitmap {
+private fun drawableToBitmap(drawable: Drawable, applyGrayscale: Boolean, isDark: Boolean): Bitmap {
   val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
   val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
   val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -193,15 +193,26 @@ private fun drawableToBitmap(drawable: Drawable, applyGrayscale: Boolean): Bitma
     val paint = Paint()
     val matrix = ColorMatrix().apply {
       setSaturation(0f)
-      // Boost contrast slightly for high-end Nothing look
-      val contrast = 1.25f
-      val scale = FloatArray(20) { 0f }.apply {
-        this[0] = contrast
-        this[6] = contrast
-        this[12] = contrast
-        this[18] = 1f
+      if (!isDark) {
+        // Theme Jour (Light): Invert & boost contrast so light/white symbols become sharp deep black!
+        val invertAndContrast = ColorMatrix(floatArrayOf(
+          -1.4f, 0f, 0f, 0f, 245f,
+          0f, -1.4f, 0f, 0f, 245f,
+          0f, 0f, -1.4f, 0f, 245f,
+          0f, 0f, 0f, 1f, 0f
+        ))
+        postConcat(invertAndContrast)
+      } else {
+        // Theme Nuit (Dark): Boost contrast for sharp white/grey glyphs
+        val contrast = 1.25f
+        val scale = FloatArray(20) { 0f }.apply {
+          this[0] = contrast
+          this[6] = contrast
+          this[12] = contrast
+          this[18] = 1f
+        }
+        postConcat(ColorMatrix(scale))
       }
-      postConcat(ColorMatrix(scale))
     }
     paint.colorFilter = ColorMatrixColorFilter(matrix)
     val layer = canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), paint)

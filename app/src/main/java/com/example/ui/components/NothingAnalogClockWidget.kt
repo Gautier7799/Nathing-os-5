@@ -49,7 +49,8 @@ fun NothingAnalogClockWidget(
   date: String,
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed,
-  onToggleStyle: () -> Unit = {}
+  onToggleStyle: () -> Unit = {},
+  onOpenClockPort: () -> Unit = {}
 ) {
   val theme = LocalLauncherTheme.current
   val isDark = theme.isDark
@@ -72,7 +73,7 @@ fun NothingAnalogClockWidget(
       .clip(RoundedCornerShape(28.dp))
       .background(theme.surface)
       .border(1.dp, theme.border, RoundedCornerShape(28.dp))
-      .clickable { onToggleStyle() }
+      .clickable { onOpenClockPort() }
       .padding(18.dp)
       .testTag("nothing_analog_clock_widget")
   ) {

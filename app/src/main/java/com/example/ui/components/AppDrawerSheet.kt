@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
 import com.example.model.IconPackStyle
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -80,6 +83,7 @@ fun AppDrawerSheet(
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
   var selectedAppForMenu by remember { mutableStateOf<AppItem?>(null) }
   val gridState = rememberLazyGridState()
   val scope = rememberCoroutineScope()
@@ -105,13 +109,15 @@ fun AppDrawerSheet(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(NothingBlack)
+      .background(theme.background)
       .testTag("app_drawer_container")
   ) {
     Column(
       modifier = Modifier
         .fillMaxSize()
-        .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+        .statusBarsPadding()
+        .navigationBarsPadding()
+        .padding(top = 10.dp, start = 16.dp, end = 16.dp)
     ) {
       // Top Bar: Back button + Search Box + Dot Indicator
       Row(
@@ -126,7 +132,7 @@ fun AppDrawerSheet(
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back to Home",
-            tint = NothingWhite
+            tint = theme.textPrimary
           )
         }
 
@@ -136,8 +142,8 @@ fun AppDrawerSheet(
             .weight(1f)
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(NothingDarkSurface)
-            .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+            .background(theme.surface)
+            .border(1.dp, theme.border, RoundedCornerShape(24.dp))
             .padding(horizontal = 14.dp),
           verticalAlignment = Alignment.CenterVertically
         ) {
@@ -156,7 +162,7 @@ fun AppDrawerSheet(
                 text = "SEARCH APPS...",
                 fontFamily = FontFamily.Monospace,
                 fontSize = 12.sp,
-                color = NothingGrey,
+                color = theme.textSecondary,
                 letterSpacing = 1.sp
               )
             }
@@ -164,7 +170,7 @@ fun AppDrawerSheet(
               value = searchQuery,
               onValueChange = onSearchChange,
               textStyle = TextStyle(
-                color = NothingWhite,
+                color = theme.textPrimary,
                 fontSize = 13.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Medium
@@ -183,7 +189,7 @@ fun AppDrawerSheet(
               Icon(
                 imageVector = Icons.Default.Clear,
                 contentDescription = "Clear",
-                tint = NothingGrey,
+                tint = theme.textSecondary,
                 modifier = Modifier.size(16.dp)
               )
             }
@@ -233,7 +239,7 @@ fun AppDrawerSheet(
                 fontSize = 10.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                color = NothingGrey,
+                color = theme.textSecondary,
                 modifier = Modifier
                   .clickable {
                     val targetIdx = filteredApps.indexOfFirst {
@@ -289,13 +295,14 @@ private fun AppContextMenuSheet(
   onAppInfo: () -> Unit,
   accentColor: Color
 ) {
+  val theme = LocalLauncherTheme.current
   val sheetState = rememberModalBottomSheetState()
 
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    containerColor = NothingMatteBlack,
-    contentColor = NothingWhite
+    containerColor = theme.surface,
+    contentColor = theme.textPrimary
   ) {
     Column(
       modifier = Modifier
@@ -319,7 +326,7 @@ private fun AppContextMenuSheet(
           fontFamily = FontFamily.Monospace,
           fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingWhite
+          color = theme.textPrimary
         )
       }
 
@@ -330,6 +337,7 @@ private fun AppContextMenuSheet(
         title = "OPEN APP",
         icon = Icons.AutoMirrored.Filled.OpenInNew,
         accentColor = accentColor,
+        textColor = theme.textPrimary,
         onClick = onLaunch
       )
 
@@ -338,6 +346,7 @@ private fun AppContextMenuSheet(
         title = if (app.isPinned) "REMOVE FROM HOME" else "PIN TO HOME SCREEN",
         icon = Icons.Default.PushPin,
         accentColor = accentColor,
+        textColor = theme.textPrimary,
         onClick = onTogglePin
       )
 
@@ -346,6 +355,7 @@ private fun AppContextMenuSheet(
         title = if (app.isDock) "REMOVE FROM DOCK" else "ADD TO DOCK FAVORITES",
         icon = Icons.Default.Star,
         accentColor = accentColor,
+        textColor = theme.textPrimary,
         onClick = onToggleDock
       )
 
@@ -354,6 +364,7 @@ private fun AppContextMenuSheet(
         title = "APP INFO & PERMISSIONS",
         icon = Icons.Default.Info,
         accentColor = accentColor,
+        textColor = theme.textPrimary,
         onClick = onAppInfo
       )
 
@@ -367,6 +378,7 @@ private fun MenuRow(
   title: String,
   icon: androidx.compose.ui.graphics.vector.ImageVector,
   accentColor: Color,
+  textColor: Color = NothingWhite,
   onClick: () -> Unit
 ) {
   Row(
@@ -389,7 +401,8 @@ private fun MenuRow(
       fontFamily = FontFamily.Monospace,
       fontSize = 13.sp,
       fontWeight = FontWeight.Medium,
-      color = NothingWhite
+      color = textColor
     )
   }
 }
+

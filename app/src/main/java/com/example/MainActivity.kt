@@ -17,6 +17,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -39,6 +40,7 @@ import com.example.ui.components.AppDrawerSheet
 import com.example.ui.components.EditNoteDialog
 import com.example.ui.components.ExpandedFolderSheet
 import com.example.ui.components.LauncherSettingsDialog
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.LauncherViewModel
 
@@ -67,11 +69,16 @@ class MainActivity : ComponentActivity() {
     setContent {
       val settings by viewModel.settings.collectAsStateWithLifecycle()
       MyApplicationTheme(themeMode = settings.themeMode) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        val theme = LocalLauncherTheme.current
+        Scaffold(
+          modifier = Modifier.fillMaxSize(),
+          containerColor = theme.background,
+          contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { _ ->
           NothingLauncherApp(
             viewModel = viewModel,
             settings = settings,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
           )
         }
       }

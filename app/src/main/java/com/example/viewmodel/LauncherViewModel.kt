@@ -265,6 +265,50 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     _settings.value = newSettings
   }
 
+  fun setCustomWallpaper(uri: android.net.Uri, target: com.example.model.WallpaperTarget) {
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      try {
+        val fileName = "custom_wp_${target.name.lowercase()}_${System.currentTimeMillis()}.jpg"
+        val destFile = java.io.File(context.filesDir, fileName)
+        context.contentResolver.openInputStream(uri)?.use { input ->
+          destFile.outputStream().use { output ->
+            input.copyTo(output)
+          }
+        }
+        val path = destFile.absolutePath
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+          when (target) {
+            com.example.model.WallpaperTarget.HOME -> {
+              _settings.update {
+                it.copy(wallpaperIndex = 7, customWallpaperUri = path)
+              }
+            }
+            com.example.model.WallpaperTarget.LOCK -> {
+              _settings.update {
+                it.copy(lockScreenWallpaperIndex = 7, customLockScreenWallpaperUri = path)
+              }
+            }
+            com.example.model.WallpaperTarget.BOTH -> {
+              _settings.update {
+                it.copy(
+                  wallpaperIndex = 7,
+                  customWallpaperUri = path,
+                  lockScreenWallpaperIndex = 7,
+                  customLockScreenWallpaperUri = path
+                )
+              }
+            }
+          }
+          android.widget.Toast.makeText(context, "Nothing OS: Wallpaper set successfully", android.widget.Toast.LENGTH_SHORT).show()
+        }
+      } catch (e: Exception) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+          android.widget.Toast.makeText(context, "Error saving wallpaper: ${e.localizedMessage ?: ""}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+      }
+    }
+  }
+
   fun toggleAudioPlayback() {
     _audio.update { it.copy(isPlaying = !it.isPlaying) }
   }

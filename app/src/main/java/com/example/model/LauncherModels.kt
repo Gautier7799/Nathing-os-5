@@ -35,6 +35,12 @@ enum class LockShortcutType {
   NONE
 }
 
+enum class WallpaperTarget {
+  HOME,
+  LOCK,
+  BOTH
+}
+
 data class LockNotificationItem(
   val id: String,
   val packageName: String,
@@ -116,6 +122,10 @@ data class LauncherSettings(
   val swipeDownNotifications: Boolean = true,
   val showSearchBarOnDock: Boolean = true,
   val hapticFeedbackEnabled: Boolean = true,
-  val wallpaperIndex: Int = 0, // 0: Dark Dot Matrix, 1: Pure Carbon Matte, 2: Circuit Glow, 3: Light Dots
+  val wallpaperIndex: Int = 0, // 0: Dot Matrix, 1: Carbon Matte, 2: Circuit Glow, 3: Light Dots, 4: Glyph Neon, 5: Retro Grid, 6: Red Abstract, 7: Custom Photo
+  val customWallpaperUri: String? = null,
+  val lockScreenWallpaperIndex: Int = -1, // -1 means same as launcher wallpaper
+  val customLockScreenWallpaperUri: String? = null,
+  val wallpaperDimPct: Int = 30, // 0% to 70% dim overlay for icon clarity
   val lockScreen: LockScreenSettings = LockScreenSettings()
 )

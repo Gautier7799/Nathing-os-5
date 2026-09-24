@@ -62,9 +62,10 @@ class NothingNotificationListenerService : NotificationListenerService() {
               pkg.substringAfterLast('.').uppercase()
             }
 
+            val uniqueKey = sbn.key ?: "${sbn.packageName}_${sbn.id}_${sbn.postTime}_${itemList.size}"
             itemList.add(
               LockNotificationItem(
-                id = "${sbn.id}_${sbn.packageName}",
+                id = uniqueKey,
                 packageName = pkg,
                 appName = appLabel,
                 title = title ?: appLabel,

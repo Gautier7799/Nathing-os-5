@@ -123,6 +123,20 @@ data class QuickToggleState(
   val wifiEnabled: Boolean = true
 )
 
+enum class NosWidgetPortType {
+  CALENDAR_DIGITAL_TIME, // Screenshot 2: JUL TUESDAY 07H 10M
+  MINI_CLUSTER_2X2,      // Screenshot 2: 14° + Cloud glyph + ECG pulse + Red recorder
+  GLANCE_TEXT_SUMMARY,   // Screenshot 2: "TODAY IS TUESDAY AND TIME IS..."
+  CIRCULAR_GAUGES,       // Screenshot 1: 73% Music + 57°C Flame + 98% Bell
+  DECIBEL_SOUND_METER,   // Screenshot 1: 103 dB with vertical dot LED meter
+  QUICK_CHECKLIST,       // Screenshot 1: "Get groceries. Read a book..."
+  CONTACT_PILL,          // Screenshot 1: Contact card with call & chat
+  CLOCK_MAIN,            // Main Nothing Clock
+  WEATHER_MAIN,          // Main Weather & Quick Toggles
+  CASSETTE_PLAYER,       // Teenage Cassette Player
+  PEDOMETER_GAUGE        // Pedometer & RAM
+}
+
 data class LauncherSettings(
   val iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   val themeMode: LauncherThemeMode = LauncherThemeMode.DARK, // DARK = Theme Nuit (Image 2), LIGHT = Theme Jour (Image 3)
@@ -141,5 +155,18 @@ data class LauncherSettings(
   val lockScreenWallpaperIndex: Int = -1, // -1 means same as launcher wallpaper
   val customLockScreenWallpaperUri: String? = null,
   val wallpaperDimPct: Int = 30, // 0% to 70% dim overlay for icon clarity
-  val lockScreen: LockScreenSettings = LockScreenSettings()
+  val lockScreen: LockScreenSettings = LockScreenSettings(),
+  val activeWidgets: List<NosWidgetPortType> = listOf(
+    NosWidgetPortType.CALENDAR_DIGITAL_TIME,
+    NosWidgetPortType.MINI_CLUSTER_2X2,
+    NosWidgetPortType.GLANCE_TEXT_SUMMARY,
+    NosWidgetPortType.CIRCULAR_GAUGES,
+    NosWidgetPortType.DECIBEL_SOUND_METER,
+    NosWidgetPortType.QUICK_CHECKLIST,
+    NosWidgetPortType.CONTACT_PILL,
+    NosWidgetPortType.CLOCK_MAIN,
+    NosWidgetPortType.WEATHER_MAIN,
+    NosWidgetPortType.CASSETTE_PLAYER,
+    NosWidgetPortType.PEDOMETER_GAUGE
+  )
 )

@@ -198,7 +198,8 @@ fun NothingLauncherApp(
       },
       onReorderPinnedApps = { from, to -> viewModel.movePinnedApp(from, to) },
       onRemovePinnedApp = { app -> viewModel.removePinnedApp(app) },
-      onToggleDockApp = { app -> viewModel.toggleDockApp(app) }
+      onToggleDockApp = { app -> viewModel.toggleDockApp(app) },
+      onToggleWidget = { widgetType -> viewModel.toggleWidgetActive(widgetType) }
     )
 
     // 2. App Drawer Screen (Animated slide in/out)

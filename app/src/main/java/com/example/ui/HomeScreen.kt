@@ -35,6 +35,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.VerticalAlignBottom
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -67,12 +70,21 @@ import com.example.model.FolderItem
 import com.example.model.LauncherClockStyle
 import com.example.model.LauncherSettings
 import com.example.model.LauncherThemeMode
+import com.example.model.NosWidgetPortType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
 import com.example.service.SystemPortHelper
 import com.example.ui.components.ACCENT_COLORS
 import com.example.ui.components.AppIconItem
 import com.example.ui.components.EnlargedFolderView
+import com.example.ui.components.NosCalendarDigitalTimeWidget
+import com.example.ui.components.NosCircularGaugesWidget
+import com.example.ui.components.NosContactPillWidget
+import com.example.ui.components.NosDecibelWidget
+import com.example.ui.components.NosGlanceTextWidget
+import com.example.ui.components.NosMiniClusterWidget
+import com.example.ui.components.NosQuickListWidget
+import com.example.ui.components.NosWidgetPortSheet
 import com.example.ui.components.NothingAnalogClockWidget
 import com.example.ui.components.NothingCassetteWidget
 import com.example.ui.components.NothingClockWidget
@@ -125,6 +137,7 @@ fun HomeScreen(
   onReorderPinnedApps: (Int, Int) -> Unit = { _, _ -> },
   onRemovePinnedApp: (AppItem) -> Unit = {},
   onToggleDockApp: (AppItem) -> Unit = {},
+  onToggleWidget: (NosWidgetPortType) -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val theme = LocalLauncherTheme.current
@@ -134,6 +147,7 @@ fun HomeScreen(
   }
 
   var isReorderingFavorites by remember { mutableStateOf(false) }
+  var showWidgetSheet by remember { mutableStateOf(false) }
 
   Box(
     modifier = modifier
@@ -222,6 +236,18 @@ fun HomeScreen(
           }
 
           IconButton(
+            onClick = { showWidgetSheet = true },
+            modifier = Modifier.testTag("home_widgets_port_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.Widgets,
+              contentDescription = "NOS 3.5 Widgets Port",
+              tint = accentColor,
+              modifier = Modifier.size(20.dp)
+            )
+          }
+
+          IconButton(
             onClick = onOpenSettings,
             modifier = Modifier.testTag("home_settings_button")
           ) {
@@ -242,89 +268,196 @@ fun HomeScreen(
           .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
       ) {
-        // 1. Signature Large Clock Widget (Dot Matrix or Round Analog)
-        item {
-          val timeParts = currentTime.split(":")
-          val hours = timeParts.getOrNull(0) ?: "12"
-          val minutes = timeParts.getOrNull(1) ?: "00"
-          if (settings.clockStyle == LauncherClockStyle.ANALOG) {
-            NothingAnalogClockWidget(
-              hours = hours,
-              minutes = minutes,
-              date = currentDate,
+        // 1. Calendar & Digital Time Widget (Screenshot 2: JUL TUESDAY 07H 10M)
+        if (settings.activeWidgets.contains(NosWidgetPortType.CALENDAR_DIGITAL_TIME)) {
+          item {
+            NosCalendarDigitalTimeWidget(
+              currentTime = currentTime,
               accentColor = accentColor,
-              onToggleStyle = onToggleClockStyle,
-              onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
-            )
-          } else {
-            NothingClockWidget(
-              hours = hours,
-              minutes = minutes,
-              date = currentDate,
-              accentColor = accentColor,
-              onToggleStyle = onToggleClockStyle,
-              onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
+              onCalendarClick = { SystemPortHelper.launchPixelCalendar(context) },
+              onClockClick = { SystemPortHelper.launchPixelClock(context) }
             )
           }
         }
 
-        // 2. 2-Column Modular Widgets: Weather + Quick Toggles
-        item {
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            NothingWeatherWidget(
+        // 2. 2x2 Mini Cluster (Screenshot 2) + Analog Clock / Weather
+        if (settings.activeWidgets.contains(NosWidgetPortType.MINI_CLUSTER_2X2)) {
+          item {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              NosMiniClusterWidget(
+                weather = weather,
+                accentColor = accentColor,
+                onWeatherClick = { SystemPortHelper.launchPixelWeather(context) },
+                onHealthClick = { SystemPortHelper.launchHealthConnect(context) },
+                onRecorderClick = { SystemPortHelper.launchPixelClock(context) },
+                modifier = Modifier.weight(1f)
+              )
+
+              if (settings.activeWidgets.contains(NosWidgetPortType.CLOCK_MAIN)) {
+                val timeParts = currentTime.split(":")
+                val hours = timeParts.getOrNull(0) ?: "12"
+                val minutes = timeParts.getOrNull(1) ?: "00"
+                NothingAnalogClockWidget(
+                  hours = hours,
+                  minutes = minutes,
+                  date = currentDate,
+                  accentColor = accentColor,
+                  onToggleStyle = onToggleClockStyle,
+                  onOpenClockPort = { SystemPortHelper.launchPixelClock(context) },
+                  modifier = Modifier.weight(1f)
+                )
+              }
+            }
+          }
+        } else if (settings.activeWidgets.contains(NosWidgetPortType.CLOCK_MAIN)) {
+          // Signature Large Clock Widget (Dot Matrix or Round Analog)
+          item {
+            val timeParts = currentTime.split(":")
+            val hours = timeParts.getOrNull(0) ?: "12"
+            val minutes = timeParts.getOrNull(1) ?: "00"
+            if (settings.clockStyle == LauncherClockStyle.ANALOG) {
+              NothingAnalogClockWidget(
+                hours = hours,
+                minutes = minutes,
+                date = currentDate,
+                accentColor = accentColor,
+                onToggleStyle = onToggleClockStyle,
+                onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
+              )
+            } else {
+              NothingClockWidget(
+                hours = hours,
+                minutes = minutes,
+                date = currentDate,
+                accentColor = accentColor,
+                onToggleStyle = onToggleClockStyle,
+                onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
+              )
+            }
+          }
+        }
+
+        // 3. Text Glance Summary Widget (Screenshot 2: "TODAY IS TUESDAY AND TIME IS...")
+        if (settings.activeWidgets.contains(NosWidgetPortType.GLANCE_TEXT_SUMMARY)) {
+          item {
+            NosGlanceTextWidget(
+              currentTime = currentTime,
               weather = weather,
-              onToggleCondition = onToggleWeather,
-              accentColor = accentColor,
-              onOpenWeatherPort = { SystemPortHelper.launchPixelWeather(context) },
-              modifier = Modifier.weight(1f)
-            )
-
-            NothingQuickTogglesWidget(
-              toggles = toggles,
-              onToggleTorch = onToggleTorch,
-              onCycleSound = onCycleSound,
-              accentColor = accentColor,
-              modifier = Modifier.weight(1.1f)
+              batteryPct = toggles.batteryLevel,
+              isCharging = toggles.isCharging,
+              onGlanceClick = { SystemPortHelper.launchPixelWeather(context) }
             )
           }
         }
 
-        // 3. Teenage Cassette Retro Player
-        item {
-          NothingCassetteWidget(
-            audio = audio,
-            onTogglePlay = onToggleAudioPlay,
-            onNextTrack = onNextAudioTrack,
-            accentColor = accentColor
-          )
+        // 4. NOS 3.5 Circular Progress Gauges (Screenshot 1: Music 73%, Red Flame 57°C, Bell 98%)
+        if (settings.activeWidgets.contains(NosWidgetPortType.CIRCULAR_GAUGES)) {
+          item {
+            NosCircularGaugesWidget(accentColor = accentColor)
+          }
         }
 
-        // 4. 2-Column Widgets: Pedometer & Storage/RAM
-        item {
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            NothingStepWidget(
-              fitness = fitness,
-              onAddStep = onAddStep,
-              accentColor = accentColor,
-              modifier = Modifier.weight(1.1f)
-            )
+        // 5. Decibel Sound Meter & Tasks Checklist (Screenshot 1)
+        if (settings.activeWidgets.contains(NosWidgetPortType.DECIBEL_SOUND_METER) ||
+            settings.activeWidgets.contains(NosWidgetPortType.QUICK_CHECKLIST)) {
+          item {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              if (settings.activeWidgets.contains(NosWidgetPortType.DECIBEL_SOUND_METER)) {
+                NosDecibelWidget(
+                  accentColor = accentColor,
+                  modifier = Modifier.weight(1f)
+                )
+              }
+              if (settings.activeWidgets.contains(NosWidgetPortType.QUICK_CHECKLIST)) {
+                NosQuickListWidget(
+                  accentColor = accentColor,
+                  modifier = Modifier.weight(1.2f)
+                )
+              }
+            }
+          }
+        }
 
-            NothingResourceWidget(
-              storagePct = storagePct,
-              ramPct = ramPct,
+        // 6. Favorite Contact Pill (Screenshot 1)
+        if (settings.activeWidgets.contains(NosWidgetPortType.CONTACT_PILL)) {
+          item {
+            NosContactPillWidget(
               accentColor = accentColor,
-              modifier = Modifier.weight(1f)
+              onCall = { SystemPortHelper.launchPixelClock(context) },
+              onChat = { SystemPortHelper.launchPixelCalendar(context) }
             )
           }
         }
 
-        // 5. Quick Memo
+        // 7. 2-Column Modular Widgets: Weather + Quick Toggles
+        if (settings.activeWidgets.contains(NosWidgetPortType.WEATHER_MAIN)) {
+          item {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              NothingWeatherWidget(
+                weather = weather,
+                onToggleCondition = onToggleWeather,
+                accentColor = accentColor,
+                onOpenWeatherPort = { SystemPortHelper.launchPixelWeather(context) },
+                modifier = Modifier.weight(1f)
+              )
+
+              NothingQuickTogglesWidget(
+                toggles = toggles,
+                onToggleTorch = onToggleTorch,
+                onCycleSound = onCycleSound,
+                accentColor = accentColor,
+                modifier = Modifier.weight(1.1f)
+              )
+            }
+          }
+        }
+
+        // 8. Teenage Cassette Retro Player
+        if (settings.activeWidgets.contains(NosWidgetPortType.CASSETTE_PLAYER)) {
+          item {
+            NothingCassetteWidget(
+              audio = audio,
+              onTogglePlay = onToggleAudioPlay,
+              onNextTrack = onNextAudioTrack,
+              accentColor = accentColor
+            )
+          }
+        }
+
+        // 9. 2-Column Widgets: Pedometer & Storage/RAM
+        if (settings.activeWidgets.contains(NosWidgetPortType.PEDOMETER_GAUGE)) {
+          item {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              NothingStepWidget(
+                fitness = fitness,
+                onAddStep = onAddStep,
+                accentColor = accentColor,
+                modifier = Modifier.weight(1.1f)
+              )
+
+              NothingResourceWidget(
+                storagePct = storagePct,
+                ramPct = ramPct,
+                accentColor = accentColor,
+                modifier = Modifier.weight(1f)
+              )
+            }
+          }
+        }
+
+        // 10. Quick Memo
         item {
           NothingQuickNoteWidget(
             note = quickNote,
@@ -333,7 +466,7 @@ fun HomeScreen(
           )
         }
 
-        // 6. Signature Nothing OS 2x2 Enlarged Folders
+        // 11. Signature Nothing OS 2x2 Enlarged Folders
         item {
           Row(
             modifier = Modifier.fillMaxWidth(),
@@ -556,6 +689,41 @@ fun HomeScreen(
           }
         }
 
+        // Customize NOS Widgets Port Button
+        item {
+          Button(
+            onClick = { showWidgetSheet = true },
+            colors = ButtonDefaults.buttonColors(
+              containerColor = theme.surface,
+              contentColor = theme.textPrimary
+            ),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(46.dp)
+              .border(1.dp, theme.border, RoundedCornerShape(14.dp))
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Icon(
+                imageVector = Icons.Default.Widgets,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(16.dp)
+              )
+              Text(
+                text = "+ CUSTOMIZE NOS 3.5 WIDGETS",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+              )
+            }
+          }
+        }
+
         item {
           Spacer(modifier = Modifier.height(10.dp))
         }
@@ -570,6 +738,16 @@ fun HomeScreen(
         iconPack = settings.iconPack,
         accentColor = accentColor,
         showSearchBar = settings.showSearchBarOnDock
+      )
+    }
+
+    // NOS 3.5 Widgets Port Bottom Sheet Picker
+    if (showWidgetSheet) {
+      NosWidgetPortSheet(
+        activeWidgets = settings.activeWidgets,
+        onToggleWidget = onToggleWidget,
+        onDismiss = { showWidgetSheet = false },
+        accentColor = accentColor
       )
     }
   }

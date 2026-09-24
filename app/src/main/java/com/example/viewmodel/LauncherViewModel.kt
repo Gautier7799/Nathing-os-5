@@ -23,6 +23,7 @@ import com.example.model.FolderItem
 import com.example.model.IconPackStyle
 import com.example.model.LauncherScreen
 import com.example.model.LauncherSettings
+import com.example.model.NosWidgetPortType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
 import kotlinx.coroutines.delay
@@ -263,6 +264,18 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
   fun updateSettings(newSettings: LauncherSettings) {
     _settings.value = newSettings
+  }
+
+  fun toggleWidgetActive(widgetType: NosWidgetPortType) {
+    _settings.update { current ->
+      val currentList = current.activeWidgets.toMutableList()
+      if (currentList.contains(widgetType)) {
+        currentList.remove(widgetType)
+      } else {
+        currentList.add(widgetType)
+      }
+      current.copy(activeWidgets = currentList)
+    }
   }
 
   fun setCustomWallpaper(uri: android.net.Uri, target: com.example.model.WallpaperTarget) {

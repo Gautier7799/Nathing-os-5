@@ -254,6 +254,7 @@ fun DotMatrixClock(
   modifier: Modifier = Modifier,
   colonColor: Color = NothingRed,
   digitColor: Color = NothingWhite,
+  unlitColor: Color = NothingUnlitDot,
   dotSize: Dp = 4.5.dp,
   dotSpacing: Dp = 2.dp,
   blinkColon: Boolean = true
@@ -280,21 +281,21 @@ fun DotMatrixClock(
   ) {
     // Hours
     hours.forEach { c ->
-      DotMatrixChar(char = c, litColor = digitColor, dotSize = dotSize, dotSpacing = dotSpacing)
+      DotMatrixChar(char = c, litColor = digitColor, unlitColor = unlitColor, dotSize = dotSize, dotSpacing = dotSpacing)
     }
 
     // Colon
     DotMatrixChar(
       char = ':',
       litColor = colonColor.copy(alpha = alpha),
-      unlitColor = NothingUnlitDot,
+      unlitColor = unlitColor,
       dotSize = dotSize,
       dotSpacing = dotSpacing
     )
 
     // Minutes
     minutes.forEach { c ->
-      DotMatrixChar(char = c, litColor = digitColor, dotSize = dotSize, dotSpacing = dotSpacing)
+      DotMatrixChar(char = c, litColor = digitColor, unlitColor = unlitColor, dotSize = dotSize, dotSpacing = dotSpacing)
     }
   }
 }

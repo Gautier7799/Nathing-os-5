@@ -27,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -59,12 +61,15 @@ import com.example.model.AppItem
 import com.example.model.AudioState
 import com.example.model.FitnessStats
 import com.example.model.FolderItem
+import com.example.model.LauncherClockStyle
 import com.example.model.LauncherSettings
+import com.example.model.LauncherThemeMode
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
 import com.example.ui.components.ACCENT_COLORS
 import com.example.ui.components.AppIconItem
 import com.example.ui.components.EnlargedFolderView
+import com.example.ui.components.NothingAnalogClockWidget
 import com.example.ui.components.NothingCassetteWidget
 import com.example.ui.components.NothingClockWidget
 import com.example.ui.components.NothingDock
@@ -74,6 +79,7 @@ import com.example.ui.components.NothingResourceWidget
 import com.example.ui.components.NothingStepWidget
 import com.example.ui.components.NothingWallpaperBackground
 import com.example.ui.components.NothingWeatherWidget
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -110,11 +116,14 @@ fun HomeScreen(
   onOpenSettings: () -> Unit,
   onSwipeDown: () -> Unit = {},
   onDoubleTap: () -> Unit = {},
+  onToggleThemeMode: () -> Unit = {},
+  onToggleClockStyle: () -> Unit = {},
   onReorderPinnedApps: (Int, Int) -> Unit = { _, _ -> },
   onRemovePinnedApp: (AppItem) -> Unit = {},
   onToggleDockApp: (AppItem) -> Unit = {},
   modifier: Modifier = Modifier
 ) {
+  val theme = LocalLauncherTheme.current
   val accentColor = remember(settings.accentColorIndex) {
     ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
   }
@@ -124,7 +133,7 @@ fun HomeScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(NothingBlack)
+      .background(theme.background)
       .testTag("home_screen_container")
   ) {
     // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)
@@ -168,7 +177,7 @@ fun HomeScreen(
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
-            color = NothingWhite,
+            color = theme.textPrimary,
             letterSpacing = 2.sp
           )
         }
@@ -177,6 +186,19 @@ fun HomeScreen(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+          // Quick Day / Night Theme Toggle (Direct 1-tap switch between Image 3 Theme Jour and Image 2 Theme Nuit)
+          IconButton(
+            onClick = onToggleThemeMode,
+            modifier = Modifier.testTag("home_theme_toggle_button")
+          ) {
+            Icon(
+              imageVector = if (!theme.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+              contentDescription = "Toggle Theme Jour / Nuit",
+              tint = if (!theme.isDark) accentColor else theme.textSecondary,
+              modifier = Modifier.size(20.dp)
+            )
+          }
+
           IconButton(
             onClick = onDoubleTap,
             modifier = Modifier.testTag("home_lock_button")
@@ -184,7 +206,7 @@ fun HomeScreen(
             Icon(
               imageVector = Icons.Default.Lock,
               contentDescription = "Lock Screen",
-              tint = NothingGrey,
+              tint = theme.textSecondary,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -196,7 +218,7 @@ fun HomeScreen(
             Icon(
               imageVector = Icons.Default.Settings,
               contentDescription = "Launcher Settings",
-              tint = NothingGrey
+              tint = theme.textSecondary
             )
           }
         }
@@ -210,17 +232,28 @@ fun HomeScreen(
           .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
       ) {
-        // 1. Signature Large Dot Clock Widget
+        // 1. Signature Large Clock Widget (Dot Matrix or Round Analog)
         item {
           val timeParts = currentTime.split(":")
           val hours = timeParts.getOrNull(0) ?: "12"
           val minutes = timeParts.getOrNull(1) ?: "00"
-          NothingClockWidget(
-            hours = hours,
-            minutes = minutes,
-            date = currentDate,
-            accentColor = accentColor
-          )
+          if (settings.clockStyle == LauncherClockStyle.ANALOG) {
+            NothingAnalogClockWidget(
+              hours = hours,
+              minutes = minutes,
+              date = currentDate,
+              accentColor = accentColor,
+              onToggleStyle = onToggleClockStyle
+            )
+          } else {
+            NothingClockWidget(
+              hours = hours,
+              minutes = minutes,
+              date = currentDate,
+              accentColor = accentColor,
+              onToggleStyle = onToggleClockStyle
+            )
+          }
         }
 
         // 2. 2-Column Modular Widgets: Weather + Quick Toggles
@@ -333,7 +366,7 @@ fun HomeScreen(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NothingWhite,
+                    color = theme.textPrimary,
                     letterSpacing = 1.sp
                   )
                 }
@@ -342,8 +375,8 @@ fun HomeScreen(
                 Box(
                   modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (isReorderingFavorites) accentColor else NothingDarkSurface)
-                    .border(1.dp, if (isReorderingFavorites) accentColor else NothingBorder, RoundedCornerShape(12.dp))
+                    .background(if (isReorderingFavorites) accentColor else theme.surface)
+                    .border(1.dp, if (isReorderingFavorites) accentColor else theme.border, RoundedCornerShape(12.dp))
                     .clickable { isReorderingFavorites = !isReorderingFavorites }
                     .padding(horizontal = 10.dp, vertical = 4.dp)
                     .testTag("rearrange_favorites_button")

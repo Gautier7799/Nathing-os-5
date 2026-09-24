@@ -25,12 +25,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -75,12 +78,15 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.example.model.IconPackStyle
+import com.example.model.LauncherClockStyle
 import com.example.model.LauncherSettings
+import com.example.model.LauncherThemeMode
 import com.example.model.LockClockStyle
 import com.example.model.LockSecurityType
 import com.example.model.LockShortcutType
 import com.example.model.WallpaperTarget
 import com.example.service.SystemIntegrationHelper
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevated
@@ -168,11 +174,13 @@ fun LauncherSettingsDialog(
     }
   }
 
+  val theme = LocalLauncherTheme.current
+
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    containerColor = NothingMatteBlack,
-    contentColor = NothingWhite
+    containerColor = theme.background,
+    contentColor = theme.textPrimary
   ) {
     Column(
       modifier = Modifier
@@ -193,21 +201,21 @@ fun LauncherSettingsDialog(
             fontFamily = FontFamily.Monospace,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite,
+            color = theme.textPrimary,
             letterSpacing = 2.sp
           )
           Text(
             text = "LAUNCHER & LOCK SCREEN PREFERENCES",
             fontFamily = FontFamily.Monospace,
             fontSize = 10.sp,
-            color = NothingGrey
+            color = theme.textSecondary
           )
         }
         IconButton(onClick = onDismiss) {
           Icon(
             imageVector = Icons.Default.Close,
             contentDescription = "Close",
-            tint = NothingWhite
+            tint = theme.textPrimary
           )
         }
       }
@@ -219,7 +227,7 @@ fun LauncherSettingsDialog(
         modifier = Modifier
           .fillMaxWidth()
           .clip(RoundedCornerShape(14.dp))
-          .background(NothingDarkSurface)
+          .background(theme.surface)
           .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
       ) {
@@ -304,6 +312,19 @@ fun LauncherSettingsDialog(
             accentColor = accentColor,
             onCheckedChange = {
               onUpdateSettings(settings.copy(lockScreen = lock.copy(isLockScreenEnabled = it)))
+            }
+          )
+
+          Spacer(modifier = Modifier.height(14.dp))
+
+          // Prevent System Lockscreen Overlap (حل مشكلة تداخل قفل النظام واللانشر)
+          SettingsSwitchRow(
+            title = "PREVENT SYSTEM LOCK OVERLAP",
+            subtitle = "Prevent visual conflict with Android system lockscreen & unlock smoothly",
+            checked = lock.preventSystemLockOverlap,
+            accentColor = accentColor,
+            onCheckedChange = {
+              onUpdateSettings(settings.copy(lockScreen = lock.copy(preventSystemLockOverlap = it)))
             }
           )
 
@@ -635,6 +656,102 @@ fun LauncherSettingsDialog(
 
         // TAB 2: THEMES & WALLPAPERS
         2 -> {
+          // 1. LAUNCHER THEME MODE: THEME JOUR (Image 3) vs THEME NUIT (Image 2) vs SYSTEM
+          Text(
+            text = "THEME MODE (THÈME DU LAUNCHER)",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(8.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            listOf(
+              Triple(LauncherThemeMode.DARK, "THEME NUIT", Icons.Default.DarkMode),
+              Triple(LauncherThemeMode.LIGHT, "THEME JOUR", Icons.Default.LightMode),
+              Triple(LauncherThemeMode.SYSTEM, "SYSTEM AUTO", Icons.Default.BrightnessAuto)
+            ).forEach { (mode, label, icon) ->
+              val isSelected = settings.themeMode == mode
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(10.dp))
+                  .background(if (isSelected) accentColor else theme.surface)
+                  .border(1.dp, if (isSelected) accentColor else theme.border, RoundedCornerShape(10.dp))
+                  .clickable { onUpdateSettings(settings.copy(themeMode = mode)) }
+                  .padding(vertical = 10.dp, horizontal = 2.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                  Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else theme.textSecondary,
+                    modifier = Modifier.size(13.dp)
+                  )
+                  Text(
+                    text = label,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else theme.textPrimary
+                  )
+                }
+              }
+            }
+          }
+
+          Spacer(modifier = Modifier.height(18.dp))
+
+          // 2. HOME CLOCK STYLE: DOT MATRIX vs ANALOG ROUND (Image 3)
+          Text(
+            text = "HOME CLOCK STYLE (STYLE D'HORLOGE)",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(8.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            listOf(
+              LauncherClockStyle.DIGITAL to "DOT MATRIX",
+              LauncherClockStyle.ANALOG to "ANALOG ROUND"
+            ).forEach { (style, label) ->
+              val isSelected = settings.clockStyle == style
+              Box(
+                modifier = Modifier
+                  .weight(1f)
+                  .clip(RoundedCornerShape(10.dp))
+                  .background(if (isSelected) accentColor else theme.surface)
+                  .border(1.dp, if (isSelected) accentColor else theme.border, RoundedCornerShape(10.dp))
+                  .clickable { onUpdateSettings(settings.copy(clockStyle = style)) }
+                  .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = label,
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 10.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else theme.textPrimary
+                )
+              }
+            }
+          }
+
+          Spacer(modifier = Modifier.height(18.dp))
+
           // Accent Color
           Text(
             text = "NOTHING ACCENT COLOR",

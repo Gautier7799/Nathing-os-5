@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
 import com.example.model.IconPackStyle
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevated
@@ -49,19 +50,21 @@ fun NothingDock(
   accentColor: Color = NothingRed,
   showSearchBar: Boolean = true
 ) {
+  val theme = LocalLauncherTheme.current
+
   Column(
     modifier = modifier
       .fillMaxWidth()
       .padding(horizontal = 16.dp, vertical = 8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    // Dock Icons Row
+    // Dock Icons Row (Image 2: Dark / Image 3: Frosted White Capsule)
     Row(
       modifier = Modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(32.dp))
-        .background(NothingDarkSurface.copy(alpha = 0.85f))
-        .border(1.dp, NothingBorder, RoundedCornerShape(32.dp))
+        .background(theme.dockBg)
+        .border(1.dp, theme.border, RoundedCornerShape(32.dp))
         .padding(horizontal = 12.dp, vertical = 8.dp),
       horizontalArrangement = Arrangement.SpaceEvenly,
       verticalAlignment = Alignment.CenterVertically
@@ -83,8 +86,8 @@ fun NothingDock(
         modifier = Modifier
           .size(48.dp)
           .clip(CircleShape)
-          .background(NothingElevated)
-          .border(1.dp, NothingBorder, CircleShape)
+          .background(theme.dockButtonBg)
+          .border(1.dp, theme.border, CircleShape)
           .clickable { onOpenDrawer() }
           .testTag("app_drawer_dock_button"),
         contentAlignment = Alignment.Center
@@ -92,7 +95,7 @@ fun NothingDock(
         Icon(
           imageVector = Icons.Default.Apps,
           contentDescription = "App Drawer",
-          tint = accentColor,
+          tint = if (theme.isDark) accentColor else Color(0xFF1A1A1A),
           modifier = Modifier.size(24.dp)
         )
       }
@@ -101,14 +104,14 @@ fun NothingDock(
     if (showSearchBar) {
       Spacer(modifier = Modifier.height(10.dp))
 
-      // Signature Nothing Search Pill
+      // Signature Nothing Search Pill (Matches Image 3 rounded search pill)
       Row(
         modifier = Modifier
           .fillMaxWidth()
           .height(44.dp)
           .clip(RoundedCornerShape(22.dp))
-          .background(NothingDarkSurface)
-          .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
+          .background(theme.searchPillBg)
+          .border(1.dp, theme.border, RoundedCornerShape(22.dp))
           .clickable { onOpenSearch() }
           .padding(horizontal = 16.dp)
           .testTag("nothing_search_pill"),
@@ -122,14 +125,14 @@ fun NothingDock(
           Icon(
             imageVector = Icons.Default.Search,
             contentDescription = "Search",
-            tint = NothingGrey,
+            tint = theme.textSecondary,
             modifier = Modifier.size(18.dp)
           )
           Text(
-            text = "SEARCH OR TYPE URL...",
+            text = if (!theme.isDark) "Search" else "SEARCH OR TYPE URL...",
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
-            color = NothingGrey,
+            color = theme.textSecondary,
             letterSpacing = 1.sp
           )
         }
@@ -138,7 +141,7 @@ fun NothingDock(
           modifier = Modifier
             .size(6.dp)
             .clip(CircleShape)
-            .background(accentColor)
+            .background(if (!theme.isDark) Color(0xFF4CAF50) else accentColor)
         )
       }
     }

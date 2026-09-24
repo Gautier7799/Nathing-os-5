@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
 import com.example.model.FolderItem
 import com.example.model.IconPackStyle
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevated
@@ -63,13 +64,15 @@ fun EnlargedFolderView(
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+
   if (folder.isEnlarged) {
     // 2x2 Enlarged Folder
     Box(
       modifier = modifier
         .clip(RoundedCornerShape(32.dp))
-        .background(NothingDarkSurface)
-        .border(1.dp, NothingBorder, RoundedCornerShape(32.dp))
+        .background(theme.surface)
+        .border(1.dp, theme.border, RoundedCornerShape(32.dp))
         .padding(14.dp)
         .testTag("enlarged_folder_${folder.id}")
     ) {
@@ -88,7 +91,7 @@ fun EnlargedFolderView(
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingGrey,
+            color = theme.textSecondary,
             letterSpacing = 1.sp
           )
 
@@ -96,14 +99,14 @@ fun EnlargedFolderView(
             modifier = Modifier
               .size(20.dp)
               .clip(CircleShape)
-              .background(NothingElevated)
+              .background(theme.elevated)
               .clickable { onToggleEnlarged() },
             contentAlignment = Alignment.Center
           ) {
             Icon(
               imageVector = Icons.Default.FullscreenExit,
               contentDescription = "Minimize Folder",
-              tint = NothingWhite,
+              tint = theme.textPrimary,
               modifier = Modifier.size(12.dp)
             )
           }
@@ -185,8 +188,8 @@ fun EnlargedFolderView(
         modifier = Modifier
           .size(54.dp)
           .clip(CircleShape)
-          .background(NothingDarkSurface)
-          .border(1.dp, NothingBorder, CircleShape)
+          .background(theme.surface)
+          .border(1.dp, theme.border, CircleShape)
           .padding(8.dp),
         contentAlignment = Alignment.Center
       ) {
@@ -196,11 +199,11 @@ fun EnlargedFolderView(
           horizontalAlignment = Alignment.CenterHorizontally
         ) {
           Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(NothingWhite))
-            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(NothingGrey))
+            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(theme.textPrimary))
+            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(theme.textSecondary))
           }
           Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(NothingGrey))
+            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(theme.textSecondary))
             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(accentColor))
           }
         }
@@ -210,7 +213,7 @@ fun EnlargedFolderView(
 
       Text(
         text = folder.name,
-        color = NothingWhite,
+        color = theme.textPrimary,
         fontSize = 11.sp,
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
@@ -234,12 +237,13 @@ fun ExpandedFolderSheet(
   accentColor: Color = NothingRed
 ) {
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  val theme = LocalLauncherTheme.current
 
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    containerColor = NothingMatteBlack,
-    contentColor = NothingWhite
+    containerColor = theme.background,
+    contentColor = theme.textPrimary
   ) {
     Column(
       modifier = Modifier
@@ -258,14 +262,14 @@ fun ExpandedFolderSheet(
             fontFamily = FontFamily.Monospace,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite,
+            color = theme.textPrimary,
             letterSpacing = 2.sp
           )
           Text(
             text = "${folder.apps.size} APPS",
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
-            color = NothingGrey
+            color = theme.textSecondary
           )
         }
 
@@ -274,14 +278,14 @@ fun ExpandedFolderSheet(
             Icon(
               imageVector = if (folder.isEnlarged) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
               contentDescription = "Toggle Enlarged",
-              tint = NothingWhite
+              tint = theme.textPrimary
             )
           }
           IconButton(onClick = onDismiss) {
             Icon(
               imageVector = Icons.Default.Close,
               contentDescription = "Close Folder",
-              tint = NothingWhite
+              tint = theme.textPrimary
             )
           }
         }

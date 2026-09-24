@@ -41,6 +41,17 @@ enum class WallpaperTarget {
   BOTH
 }
 
+enum class LauncherThemeMode {
+  DARK,   // Theme Nuit (Image 2: Pure Nothing Matte Black, dark cards, neon accents)
+  LIGHT,  // Theme Jour (Image 3: Crisp Nothing White/Pastel Glass, sleek circular buttons, analog clock)
+  SYSTEM  // Auto match system night mode
+}
+
+enum class LauncherClockStyle {
+  ANALOG,  // Round disc analog clock with hour/minute hands & accent dot (as in Image 3)
+  DIGITAL  // Segmented dot matrix clock (as in Image 2)
+}
+
 data class LockNotificationItem(
   val id: String,
   val packageName: String,
@@ -52,6 +63,7 @@ data class LockNotificationItem(
 
 data class LockScreenSettings(
   val isLockScreenEnabled: Boolean = true,
+  val preventSystemLockOverlap: Boolean = true, // Prevents launcher widgets from showing behind Android system lockscreen
   val securityType: LockSecurityType = LockSecurityType.SWIPE,
   val pinCode: String = "1234",
   val clockStyle: LockClockStyle = LockClockStyle.DOT_MATRIX_BIG,
@@ -113,6 +125,8 @@ data class QuickToggleState(
 
 data class LauncherSettings(
   val iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
+  val themeMode: LauncherThemeMode = LauncherThemeMode.DARK, // DARK = Theme Nuit (Image 2), LIGHT = Theme Jour (Image 3)
+  val clockStyle: LauncherClockStyle = LauncherClockStyle.ANALOG, // ANALOG (Image 3) or DIGITAL (Image 2)
   val accentColorIndex: Int = 0, // 0: Red, 1: White, 2: Orange, 3: Yellow
   val gridColumns: Int = 4,
   val showLabels: Boolean = true,

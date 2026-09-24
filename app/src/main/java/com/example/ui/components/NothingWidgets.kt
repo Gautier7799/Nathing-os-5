@@ -61,10 +61,12 @@ import com.example.model.AudioState
 import com.example.model.FitnessStats
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevated
+import com.example.ui.theme.NothingGreenAccent
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingUnlitDot
@@ -81,14 +83,19 @@ fun NothingClockWidget(
   minutes: String,
   date: String,
   modifier: Modifier = Modifier,
-  accentColor: Color = NothingRed
+  accentColor: Color = NothingRed,
+  onToggleStyle: () -> Unit = {}
 ) {
+  val theme = LocalLauncherTheme.current
+  val digitColor = if (theme.isDark) NothingWhite else Color(0xFF111111)
+
   Box(
     modifier = modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
+      .clickable { onToggleStyle() }
       .padding(horizontal = 20.dp, vertical = 18.dp)
       .testTag("clock_widget")
   ) {
@@ -106,7 +113,7 @@ fun NothingClockWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         Box(
@@ -124,7 +131,8 @@ fun NothingClockWidget(
         hours = hours,
         minutes = minutes,
         colonColor = accentColor,
-        digitColor = NothingWhite,
+        digitColor = digitColor,
+        unlitColor = theme.unlitDot,
         dotSize = 5.dp,
         dotSpacing = 2.dp
       )
@@ -137,7 +145,7 @@ fun NothingClockWidget(
         fontFamily = FontFamily.Monospace,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = NothingWhite,
+        color = theme.textPrimary,
         letterSpacing = 2.sp
       )
     }
@@ -154,11 +162,13 @@ fun NothingWeatherWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+
   Box(
     modifier = modifier
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .clickable { onToggleCondition() }
       .padding(16.dp)
       .testTag("weather_widget")
@@ -174,13 +184,13 @@ fun NothingWeatherWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         Icon(
           imageVector = if (weather.condition == "SUNNY") Icons.Default.WbSunny else Icons.Default.WbCloudy,
           contentDescription = "Weather condition",
-          tint = if (weather.condition == "SUNNY") accentColor else NothingWhite,
+          tint = if (weather.condition == "SUNNY") accentColor else theme.textPrimary,
           modifier = Modifier.size(18.dp)
         )
       }
@@ -193,7 +203,8 @@ fun NothingWeatherWidget(
       ) {
         DotMatrixString(
           text = "${weather.tempC}°",
-          litColor = NothingWhite,
+          litColor = theme.textPrimary,
+          unlitColor = theme.unlitDot,
           dotSize = 3.5.dp,
           dotSpacing = 1.5.dp
         )
@@ -206,7 +217,7 @@ fun NothingWeatherWidget(
         fontFamily = FontFamily.Monospace,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
-        color = NothingWhite,
+        color = theme.textPrimary,
         letterSpacing = 1.sp
       )
 
@@ -214,7 +225,7 @@ fun NothingWeatherWidget(
         text = "H:${weather.highC}° L:${weather.lowC}°",
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp,
-        color = NothingGrey
+        color = theme.textSecondary
       )
     }
   }
@@ -231,11 +242,14 @@ fun NothingQuickTogglesWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+  val torchActiveColor = if (!theme.isDark) NothingGreenAccent else accentColor
+
   Box(
     modifier = modifier
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .padding(14.dp)
       .testTag("quick_toggles_widget")
   ) {
@@ -250,7 +264,7 @@ fun NothingQuickTogglesWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 10.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         // Battery status in dot matrix
@@ -271,7 +285,7 @@ fun NothingQuickTogglesWidget(
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = if (toggles.batteryLevel <= 20) accentColor else NothingWhite
+            color = if (toggles.batteryLevel <= 20) accentColor else theme.textPrimary
           )
         }
       }
@@ -283,19 +297,19 @@ fun NothingQuickTogglesWidget(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
       ) {
-        // Torch Button
+        // Torch Button (Vibrant Green in Light Theme like Image 3, Red/Accent in Dark Theme)
         Box(
           modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(if (toggles.isTorchOn) accentColor else NothingElevated)
+            .background(if (toggles.isTorchOn) torchActiveColor else theme.elevated)
             .clickable { onToggleTorch() },
           contentAlignment = Alignment.Center
         ) {
           Icon(
             imageVector = if (toggles.isTorchOn) Icons.Default.FlashlightOn else Icons.Default.FlashlightOff,
             contentDescription = "Flashlight",
-            tint = if (toggles.isTorchOn) NothingWhite else NothingGrey,
+            tint = if (toggles.isTorchOn) NothingWhite else theme.textSecondary,
             modifier = Modifier.size(20.dp)
           )
         }
@@ -305,7 +319,7 @@ fun NothingQuickTogglesWidget(
           modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(if (toggles.soundMode == 0) accentColor else NothingElevated)
+            .background(if (toggles.soundMode == 0) accentColor else theme.elevated)
             .clickable { onCycleSound() },
           contentAlignment = Alignment.Center
         ) {
@@ -316,7 +330,7 @@ fun NothingQuickTogglesWidget(
               else -> Icons.Default.Notifications
             },
             contentDescription = "Sound Mode",
-            tint = if (toggles.soundMode == 0) NothingWhite else NothingGrey,
+            tint = if (toggles.soundMode == 0) NothingWhite else theme.textSecondary,
             modifier = Modifier.size(20.dp)
           )
         }
@@ -333,7 +347,7 @@ fun NothingQuickTogglesWidget(
 
             // Background track
             drawCircle(
-              color = NothingUnlitDot,
+              color = theme.unlitDot,
               radius = radius,
               center = center,
               style = Stroke(strokeWidth)
@@ -342,7 +356,7 @@ fun NothingQuickTogglesWidget(
             // Progress arc
             val sweep = (toggles.batteryLevel / 100f) * 360f
             drawArc(
-              color = if (toggles.batteryLevel <= 20) accentColor else NothingWhite,
+              color = if (toggles.batteryLevel <= 20) accentColor else (if (theme.isDark) NothingWhite else NothingBlack),
               startAngle = -90f,
               sweepAngle = sweep,
               useCenter = false,
@@ -357,7 +371,7 @@ fun NothingQuickTogglesWidget(
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite
+            color = theme.textPrimary
           )
         }
       }
@@ -375,11 +389,13 @@ fun NothingStepWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+
   Box(
     modifier = modifier
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .clickable { onAddStep() }
       .padding(16.dp)
       .testTag("step_widget")
@@ -395,7 +411,7 @@ fun NothingStepWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         Icon(
@@ -430,7 +446,7 @@ fun NothingStepWidget(
               val isLit = i <= litCount
 
               drawCircle(
-                color = if (isLit) accentColor else NothingUnlitDot,
+                color = if (isLit) accentColor else theme.unlitDot,
                 radius = if (isLit) 3.5.dp.toPx() else 2.5.dp.toPx(),
                 center = Offset(cx, cy)
               )
@@ -442,7 +458,7 @@ fun NothingStepWidget(
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite
+            color = theme.textPrimary
           )
         }
 
@@ -452,13 +468,13 @@ fun NothingStepWidget(
             fontSize = 20.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite
+            color = theme.textPrimary
           )
           Text(
             text = "${fitness.calories} kcal • ${fitness.distanceKm} km",
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
-            color = NothingGrey
+            color = theme.textSecondary
           )
         }
       }
@@ -477,6 +493,7 @@ fun NothingCassetteWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
   val infiniteTransition = rememberInfiniteTransition(label = "cassette")
   val rotation by infiniteTransition.animateFloat(
     initialValue = 0f,
@@ -492,8 +509,8 @@ fun NothingCassetteWidget(
     modifier = modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .padding(16.dp)
       .testTag("cassette_widget")
   ) {
@@ -508,14 +525,14 @@ fun NothingCassetteWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 10.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         Box(
           modifier = Modifier
             .size(6.dp)
             .clip(CircleShape)
-            .background(if (audio.isPlaying) accentColor else NothingGrey)
+            .background(if (audio.isPlaying) accentColor else theme.textSecondary)
         )
       }
 
@@ -552,14 +569,14 @@ fun NothingCassetteWidget(
             fontFamily = FontFamily.Monospace,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = NothingWhite,
+            color = theme.textPrimary,
             maxLines = 1
           )
           Text(
             text = audio.artist,
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
-            color = NothingGrey,
+            color = theme.textSecondary,
             maxLines = 1
           )
         }
@@ -573,14 +590,14 @@ fun NothingCassetteWidget(
             modifier = Modifier
               .size(36.dp)
               .clip(CircleShape)
-              .background(if (audio.isPlaying) accentColor else NothingElevated)
+              .background(if (audio.isPlaying) accentColor else theme.elevated)
               .clickable { onTogglePlay() },
             contentAlignment = Alignment.Center
           ) {
             Icon(
               imageVector = if (audio.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
               contentDescription = "Play/Pause",
-              tint = NothingWhite,
+              tint = if (audio.isPlaying) NothingWhite else theme.textPrimary,
               modifier = Modifier.size(18.dp)
             )
           }
@@ -589,14 +606,14 @@ fun NothingCassetteWidget(
             modifier = Modifier
               .size(36.dp)
               .clip(CircleShape)
-              .background(NothingElevated)
+              .background(theme.elevated)
               .clickable { onNextTrack() },
             contentAlignment = Alignment.Center
           ) {
             Icon(
               imageVector = Icons.Default.SkipNext,
               contentDescription = "Next Track",
-              tint = NothingWhite,
+              tint = theme.textPrimary,
               modifier = Modifier.size(18.dp)
             )
           }
@@ -608,12 +625,13 @@ fun NothingCassetteWidget(
 
 @Composable
 private fun CassetteReel(rotation: Float, accentColor: Color) {
+  val theme = LocalLauncherTheme.current
   Box(
     modifier = Modifier
       .size(36.dp)
       .clip(CircleShape)
-      .background(NothingElevated)
-      .border(1.dp, NothingBorder, CircleShape)
+      .background(theme.elevated)
+      .border(1.dp, theme.border, CircleShape)
       .rotate(rotation),
     contentAlignment = Alignment.Center
   ) {
@@ -627,7 +645,7 @@ private fun CassetteReel(rotation: Float, accentColor: Color) {
         val endX = center.x + radius * cos(angle).toFloat()
         val endY = center.y + radius * sin(angle).toFloat()
         drawLine(
-          color = NothingGrey,
+          color = theme.textSecondary,
           start = center,
           end = Offset(endX, endY),
           strokeWidth = 1.5.dp.toPx()
@@ -652,11 +670,13 @@ fun NothingQuickNoteWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+
   Box(
     modifier = modifier
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .clickable { onEditNote() }
       .padding(16.dp)
       .testTag("quick_note_widget")
@@ -672,7 +692,7 @@ fun NothingQuickNoteWidget(
           fontFamily = FontFamily.Monospace,
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = NothingGrey,
+          color = theme.textSecondary,
           letterSpacing = 1.sp
         )
         Icon(
@@ -689,7 +709,7 @@ fun NothingQuickNoteWidget(
         text = note,
         fontFamily = FontFamily.Monospace,
         fontSize = 11.sp,
-        color = NothingWhite,
+        color = theme.textPrimary,
         maxLines = 3,
         lineHeight = 16.sp
       )
@@ -707,11 +727,13 @@ fun NothingResourceWidget(
   modifier: Modifier = Modifier,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+
   Box(
     modifier = modifier
       .clip(RoundedCornerShape(24.dp))
-      .background(NothingDarkSurface)
-      .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(24.dp))
       .padding(16.dp)
       .testTag("resource_widget")
   ) {
@@ -721,7 +743,7 @@ fun NothingResourceWidget(
         fontFamily = FontFamily.Monospace,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
-        color = NothingGrey,
+        color = theme.textSecondary,
         letterSpacing = 1.sp
       )
 
@@ -732,7 +754,7 @@ fun NothingResourceWidget(
         horizontalArrangement = Arrangement.SpaceAround
       ) {
         ResourceMetric(label = "STORAGE", percent = storagePct, accentColor = accentColor)
-        ResourceMetric(label = "RAM", percent = ramPct, accentColor = NothingWhite)
+        ResourceMetric(label = "RAM", percent = ramPct, accentColor = if (theme.isDark) NothingWhite else NothingBlack)
       }
     }
   }
@@ -740,6 +762,7 @@ fun NothingResourceWidget(
 
 @Composable
 private fun ResourceMetric(label: String, percent: Int, accentColor: Color) {
+  val theme = LocalLauncherTheme.current
   Column(horizontalAlignment = Alignment.CenterHorizontally) {
     Box(modifier = Modifier.size(42.dp), contentAlignment = Alignment.Center) {
       Canvas(modifier = Modifier.fillMaxSize()) {
@@ -748,7 +771,7 @@ private fun ResourceMetric(label: String, percent: Int, accentColor: Color) {
         val center = Offset(size.width / 2, size.height / 2)
 
         drawCircle(
-          color = NothingUnlitDot,
+          color = theme.unlitDot,
           radius = radius,
           center = center,
           style = Stroke(stroke)
@@ -769,7 +792,7 @@ private fun ResourceMetric(label: String, percent: Int, accentColor: Color) {
         fontSize = 9.sp,
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Bold,
-        color = NothingWhite
+        color = theme.textPrimary
       )
     }
     Spacer(modifier = Modifier.height(4.dp))
@@ -777,7 +800,7 @@ private fun ResourceMetric(label: String, percent: Int, accentColor: Color) {
       text = label,
       fontSize = 9.sp,
       fontFamily = FontFamily.Monospace,
-      color = NothingGrey
+      color = theme.textSecondary
     )
   }
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import com.example.R
 import com.example.model.LauncherSettings
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import java.io.File
 
@@ -29,6 +30,7 @@ fun NothingWallpaperBackground(
   onDoubleTap: (() -> Unit)? = null,
   modifier: Modifier = Modifier
 ) {
+  val theme = LocalLauncherTheme.current
   val effectiveIndex = if (isLockScreen && settings.lockScreenWallpaperIndex >= 0) {
     settings.lockScreenWallpaperIndex
   } else {
@@ -41,34 +43,42 @@ fun NothingWallpaperBackground(
     settings.customWallpaperUri
   }
 
+  val baseBackgroundColor = if (!theme.isDark && effectiveIndex in listOf(0, 1, 3)) {
+    theme.background
+  } else {
+    NothingBlack
+  }
+
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(NothingBlack)
+      .background(baseBackgroundColor)
       .testTag(if (isLockScreen) "lock_wallpaper_bg" else "home_wallpaper_bg")
   ) {
     // 1. Wallpaper Layer
     when (effectiveIndex) {
       0 -> {
-        // DOT MATRIX NOIR
-        Canvas(modifier = Modifier.fillMaxSize().alpha(0.08f)) {
+        // DOT MATRIX NOIR / BLANC (Day mode: light grey dots on white; Night mode: subtle white dots on black)
+        val dotColor = if (theme.isDark) Color.White else Color(0xFF666666)
+        val dotAlpha = if (theme.isDark) 0.08f else 0.12f
+        Canvas(modifier = Modifier.fillMaxSize().alpha(dotAlpha)) {
           val dotSpacing = 30f
           val cols = (size.width / dotSpacing).toInt()
           val rows = (size.height / dotSpacing).toInt()
           for (i in 0..cols) {
             for (j in 0..rows) {
-              drawCircle(Color.White, 1.2f, Offset(i * dotSpacing, j * dotSpacing))
+              drawCircle(dotColor, 1.2f, Offset(i * dotSpacing, j * dotSpacing))
             }
           }
         }
       }
 
       1 -> {
-        // CARBON MATTE (Pure deep Nothing stealth)
+        // CARBON MATTE / LIGHT CANVAS (Stealth black in Night, Crisp clean Nothing light in Day)
         Box(
           modifier = Modifier
             .fillMaxSize()
-            .background(NothingBlack)
+            .background(baseBackgroundColor)
         )
       }
 
@@ -92,13 +102,14 @@ fun NothingWallpaperBackground(
 
       3 -> {
         // LIGHT MONOCHROME
-        Canvas(modifier = Modifier.fillMaxSize().alpha(0.18f)) {
+        val dotColor = if (theme.isDark) Color.White else Color(0xFF444444)
+        Canvas(modifier = Modifier.fillMaxSize().alpha(if (theme.isDark) 0.18f else 0.15f)) {
           val dotSpacing = 24f
           val cols = (size.width / dotSpacing).toInt()
           val rows = (size.height / dotSpacing).toInt()
           for (i in 0..cols) {
             for (j in 0..rows) {
-              drawCircle(Color.White, 1.4f, Offset(i * dotSpacing, j * dotSpacing))
+              drawCircle(dotColor, 1.4f, Offset(i * dotSpacing, j * dotSpacing))
             }
           }
         }

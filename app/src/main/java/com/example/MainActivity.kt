@@ -1,5 +1,10 @@
 package com.example
 
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -22,7 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.model.LauncherClockStyle
 import com.example.model.LauncherScreen
+import com.example.model.LauncherSettings
+import com.example.model.LauncherThemeMode
 import com.example.model.LockShortcutType
 import com.example.ui.HomeScreen
 import com.example.ui.NothingLockScreen
@@ -38,26 +46,60 @@ class MainActivity : ComponentActivity() {
 
   private val viewModel: LauncherViewModel by viewModels()
 
+  // Receiver to synchronize with system lock screen and prevent visual overlap
+  private val keyguardReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      if (intent?.action == Intent.ACTION_USER_PRESENT) {
+        if (viewModel.settings.value.lockScreen.preventSystemLockOverlap) {
+          viewModel.unlockLauncherScreen()
+        }
+      }
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
 
+    val filter = IntentFilter(Intent.ACTION_USER_PRESENT)
+    registerReceiver(keyguardReceiver, filter)
+
     setContent {
-      MyApplicationTheme {
+      val settings by viewModel.settings.collectAsStateWithLifecycle()
+      MyApplicationTheme(themeMode = settings.themeMode) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
           NothingLauncherApp(
             viewModel = viewModel,
+            settings = settings,
             modifier = Modifier.padding(innerPadding)
           )
         }
       }
     }
   }
+
+  override fun onResume() {
+    super.onResume()
+    val km = getSystemService(KeyguardManager::class.java)
+    if (km != null && !km.isKeyguardLocked && viewModel.settings.value.lockScreen.preventSystemLockOverlap) {
+      if (viewModel.currentScreen.value == LauncherScreen.LOCK_SCREEN) {
+        viewModel.unlockLauncherScreen()
+      }
+    }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    try {
+      unregisterReceiver(keyguardReceiver)
+    } catch (_: Exception) {}
+  }
 }
 
 @Composable
 fun NothingLauncherApp(
   viewModel: LauncherViewModel,
+  settings: LauncherSettings,
   modifier: Modifier = Modifier
 ) {
   val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
@@ -75,7 +117,6 @@ fun NothingLauncherApp(
   val dockApps by viewModel.dockApps.collectAsStateWithLifecycle()
   val installedApps by viewModel.installedApps.collectAsStateWithLifecycle()
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-  val settings by viewModel.settings.collectAsStateWithLifecycle()
   val activeFolder by viewModel.activeOpenFolder.collectAsStateWithLifecycle()
   val notifications by viewModel.notifications.collectAsStateWithLifecycle()
 
@@ -132,6 +173,22 @@ fun NothingLauncherApp(
       onOpenSettings = { isSettingsOpen = true },
       onSwipeDown = { viewModel.openNotificationsPanel() },
       onDoubleTap = { viewModel.lockScreen() },
+      onToggleThemeMode = {
+        val newTheme = if (settings.themeMode == LauncherThemeMode.LIGHT) {
+          LauncherThemeMode.DARK
+        } else {
+          LauncherThemeMode.LIGHT
+        }
+        viewModel.updateSettings(settings.copy(themeMode = newTheme))
+      },
+      onToggleClockStyle = {
+        val newClock = if (settings.clockStyle == LauncherClockStyle.ANALOG) {
+          LauncherClockStyle.DIGITAL
+        } else {
+          LauncherClockStyle.ANALOG
+        }
+        viewModel.updateSettings(settings.copy(clockStyle = newClock))
+      },
       onReorderPinnedApps = { from, to -> viewModel.movePinnedApp(from, to) },
       onRemovePinnedApp = { app -> viewModel.removePinnedApp(app) },
       onToggleDockApp = { app -> viewModel.toggleDockApp(app) }

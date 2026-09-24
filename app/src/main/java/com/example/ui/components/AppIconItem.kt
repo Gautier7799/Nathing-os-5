@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
 import com.example.model.IconPackStyle
+import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
@@ -71,6 +72,9 @@ fun AppIconItem(
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   accentColor: Color = NothingRed
 ) {
+  val theme = LocalLauncherTheme.current
+  val isDark = theme.isDark
+
   Column(
     modifier = modifier
       .clip(RoundedCornerShape(12.dp))
@@ -87,15 +91,19 @@ fun AppIconItem(
         .size(iconSize)
         .clip(CircleShape)
         .background(
-          when (iconPack) {
-            IconPackStyle.MONOCHROME -> NothingDarkSurface
-            IconPackStyle.MINIMAL_DARK -> NothingElevated
-            IconPackStyle.SYSTEM_DEFAULT -> Color.Transparent
+          if (!isDark && iconPack != IconPackStyle.SYSTEM_DEFAULT) {
+            Color.White
+          } else {
+            when (iconPack) {
+              IconPackStyle.MONOCHROME -> NothingDarkSurface
+              IconPackStyle.MINIMAL_DARK -> NothingElevated
+              IconPackStyle.SYSTEM_DEFAULT -> Color.Transparent
+            }
           }
         )
         .border(
           width = 1.dp,
-          color = if (iconPack != IconPackStyle.SYSTEM_DEFAULT) NothingBorder else Color.Transparent,
+          color = if (iconPack != IconPackStyle.SYSTEM_DEFAULT) theme.border else Color.Transparent,
           shape = CircleShape
         ),
       contentAlignment = Alignment.Center
@@ -117,7 +125,7 @@ fun AppIconItem(
         Icon(
           imageVector = iconVector,
           contentDescription = app.label,
-          tint = if (iconPack == IconPackStyle.MONOCHROME) NothingWhite else accentColor,
+          tint = if (!isDark) Color(0xFF161616) else (if (iconPack == IconPackStyle.MONOCHROME) NothingWhite else accentColor),
           modifier = Modifier.size(iconSize * 0.55f)
         )
       }
@@ -163,7 +171,7 @@ fun AppIconItem(
       Spacer(modifier = Modifier.height(4.dp))
       Text(
         text = app.label,
-        color = NothingWhite,
+        color = theme.textPrimary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Medium,
         fontFamily = FontFamily.Monospace,

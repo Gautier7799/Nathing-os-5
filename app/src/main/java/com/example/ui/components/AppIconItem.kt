@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -150,148 +151,154 @@ fun AppIconItem(
       .testTag("app_item_${app.packageName}"),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    when (iconPack) {
-      // 1. COLOUR PACK (Screenshot 4: 12-lobed Scalloped Flower Badge)
-      IconPackStyle.COLOUR -> {
-        val flowerShape = remember { ScallopedFlowerShape(lobes = 12) }
-        Box(
-          modifier = Modifier
-            .size(iconSize)
-            .clip(flowerShape)
-            .background(pastelBg)
-            .border(1.dp, pastelBg.copy(alpha = 0.5f), flowerShape),
-          contentAlignment = Alignment.Center
-        ) {
-          if (app.icon != null) {
-            val bitmap = remember(app.icon, isDark) {
-              drawableToBitmap(app.icon, applyGrayscale = false, isDark = false)
+    Box(
+      modifier = Modifier.size(iconSize),
+      contentAlignment = Alignment.Center
+    ) {
+      when (iconPack) {
+        // 1. COLOUR PACK (Screenshot 4: 12-lobed Scalloped Flower Badge)
+        IconPackStyle.COLOUR -> {
+          val flowerShape = remember { ScallopedFlowerShape(lobes = 12) }
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clip(flowerShape)
+              .background(pastelBg)
+              .border(1.dp, pastelBg.copy(alpha = 0.5f), flowerShape),
+            contentAlignment = Alignment.Center
+          ) {
+            if (app.icon != null) {
+              val bitmap = remember(app.icon, isDark) {
+                drawableToBitmap(app.icon, applyGrayscale = false, isDark = false)
+              }
+              Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = app.label,
+                modifier = Modifier
+                  .size(iconSize * 0.62f)
+                  .clip(CircleShape)
+              )
+            } else {
+              val iconVector = getIconVectorForApp(app.label)
+              Icon(
+                imageVector = iconVector,
+                contentDescription = app.label,
+                tint = Color(0xFF1E1E1E),
+                modifier = Modifier.size(iconSize * 0.52f)
+              )
             }
-            Image(
-              bitmap = bitmap.asImageBitmap(),
-              contentDescription = app.label,
-              modifier = Modifier
-                .size(iconSize * 0.62f)
-                .clip(CircleShape)
-            )
-          } else {
-            val iconVector = getIconVectorForApp(app.label)
-            Icon(
-              imageVector = iconVector,
-              contentDescription = app.label,
-              tint = Color(0xFF1E1E1E),
-              modifier = Modifier.size(iconSize * 0.52f)
-            )
           }
-          AppBadges(app = app, accentColor = accentColor, isDark = isDark)
+        }
+
+        // 2. SYSTEM DEFAULT PACK (Screenshot 4: Concentric Circle Badge)
+        IconPackStyle.SYSTEM_DEFAULT -> {
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clip(CircleShape)
+              .background(if (isDark) NothingDarkSurface else Color.White)
+              .border(2.dp, theme.border.copy(alpha = 0.7f), CircleShape)
+              .padding(3.dp)
+              .border(1.dp, theme.border.copy(alpha = 0.35f), CircleShape),
+            contentAlignment = Alignment.Center
+          ) {
+            if (app.icon != null) {
+              val bitmap = remember(app.icon) {
+                drawableToBitmap(app.icon, applyGrayscale = false, isDark = false)
+              }
+              Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = app.label,
+                modifier = Modifier
+                  .size(iconSize * 0.68f)
+                  .clip(CircleShape)
+              )
+            } else {
+              val iconVector = getIconVectorForApp(app.label)
+              Icon(
+                imageVector = iconVector,
+                contentDescription = app.label,
+                tint = accentColor,
+                modifier = Modifier.size(iconSize * 0.55f)
+              )
+            }
+          }
+        }
+
+        // 3. NOTHING MONOCHROME PACK (Screenshot 1 & 2: Nothing OS Circular Glyph)
+        IconPackStyle.MONOCHROME -> {
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clip(CircleShape)
+              .background(if (isDark) NothingDarkSurface else Color.White)
+              .border(
+                width = 1.dp,
+                color = if (isDark) theme.border else Color(0xFFE2E2E2),
+                shape = CircleShape
+              ),
+            contentAlignment = Alignment.Center
+          ) {
+            if (app.icon != null) {
+              val bitmap = remember(app.icon, isDark) {
+                drawableToBitmap(app.icon, applyGrayscale = true, isDark = isDark)
+              }
+              Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = app.label,
+                modifier = Modifier
+                  .size(iconSize * 0.70f)
+                  .clip(CircleShape)
+              )
+            } else {
+              val iconVector = getIconVectorForApp(app.label)
+              Icon(
+                imageVector = iconVector,
+                contentDescription = app.label,
+                tint = if (isDark) NothingWhite else Color(0xFF161616),
+                modifier = Modifier.size(iconSize * 0.55f)
+              )
+            }
+          }
+        }
+
+        // 4. MINIMAL DARK PACK
+        IconPackStyle.MINIMAL_DARK -> {
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clip(CircleShape)
+              .background(NothingElevated)
+              .border(1.dp, theme.border, CircleShape),
+            contentAlignment = Alignment.Center
+          ) {
+            if (app.icon != null) {
+              val bitmap = remember(app.icon, isDark) {
+                drawableToBitmap(app.icon, applyGrayscale = true, isDark = true)
+              }
+              Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = app.label,
+                modifier = Modifier
+                  .size(iconSize * 0.70f)
+                  .clip(CircleShape)
+              )
+            } else {
+              val iconVector = getIconVectorForApp(app.label)
+              Icon(
+                imageVector = iconVector,
+                contentDescription = app.label,
+                tint = NothingWhite,
+                modifier = Modifier.size(iconSize * 0.55f)
+              )
+            }
+          }
         }
       }
 
-      // 2. SYSTEM DEFAULT PACK (Screenshot 4: Concentric Circle Badge)
-      IconPackStyle.SYSTEM_DEFAULT -> {
-        Box(
-          modifier = Modifier
-            .size(iconSize)
-            .clip(CircleShape)
-            .background(if (isDark) NothingDarkSurface else Color.White)
-            .border(2.dp, theme.border.copy(alpha = 0.7f), CircleShape)
-            .padding(3.dp)
-            .border(1.dp, theme.border.copy(alpha = 0.35f), CircleShape),
-          contentAlignment = Alignment.Center
-        ) {
-          if (app.icon != null) {
-            val bitmap = remember(app.icon) {
-              drawableToBitmap(app.icon, applyGrayscale = false, isDark = false)
-            }
-            Image(
-              bitmap = bitmap.asImageBitmap(),
-              contentDescription = app.label,
-              modifier = Modifier
-                .size(iconSize * 0.68f)
-                .clip(CircleShape)
-            )
-          } else {
-            val iconVector = getIconVectorForApp(app.label)
-            Icon(
-              imageVector = iconVector,
-              contentDescription = app.label,
-              tint = accentColor,
-              modifier = Modifier.size(iconSize * 0.55f)
-            )
-          }
-          AppBadges(app = app, accentColor = accentColor, isDark = isDark)
-        }
-      }
-
-      // 3. NOTHING MONOCHROME PACK (Screenshot 1 & 2: Nothing OS Circular Glyph)
-      IconPackStyle.MONOCHROME -> {
-        Box(
-          modifier = Modifier
-            .size(iconSize)
-            .clip(CircleShape)
-            .background(if (isDark) NothingDarkSurface else Color.White)
-            .border(
-              width = 1.dp,
-              color = if (isDark) theme.border else Color(0xFFE2E2E2),
-              shape = CircleShape
-            ),
-          contentAlignment = Alignment.Center
-        ) {
-          if (app.icon != null) {
-            val bitmap = remember(app.icon, isDark) {
-              drawableToBitmap(app.icon, applyGrayscale = true, isDark = isDark)
-            }
-            Image(
-              bitmap = bitmap.asImageBitmap(),
-              contentDescription = app.label,
-              modifier = Modifier
-                .size(iconSize * 0.70f)
-                .clip(CircleShape)
-            )
-          } else {
-            val iconVector = getIconVectorForApp(app.label)
-            Icon(
-              imageVector = iconVector,
-              contentDescription = app.label,
-              tint = if (isDark) NothingWhite else Color(0xFF161616),
-              modifier = Modifier.size(iconSize * 0.55f)
-            )
-          }
-          AppBadges(app = app, accentColor = accentColor, isDark = isDark)
-        }
-      }
-
-      // 4. MINIMAL DARK PACK
-      IconPackStyle.MINIMAL_DARK -> {
-        Box(
-          modifier = Modifier
-            .size(iconSize)
-            .clip(CircleShape)
-            .background(NothingElevated)
-            .border(1.dp, theme.border, CircleShape),
-          contentAlignment = Alignment.Center
-        ) {
-          if (app.icon != null) {
-            val bitmap = remember(app.icon, isDark) {
-              drawableToBitmap(app.icon, applyGrayscale = true, isDark = true)
-            }
-            Image(
-              bitmap = bitmap.asImageBitmap(),
-              contentDescription = app.label,
-              modifier = Modifier
-                .size(iconSize * 0.70f)
-                .clip(CircleShape)
-            )
-          } else {
-            val iconVector = getIconVectorForApp(app.label)
-            Icon(
-              imageVector = iconVector,
-              contentDescription = app.label,
-              tint = NothingWhite,
-              modifier = Modifier.size(iconSize * 0.55f)
-            )
-          }
-          AppBadges(app = app, accentColor = accentColor, isDark = isDark)
-        }
+      // Unclipped Badge on Top-Right of icon
+      Box(modifier = Modifier.align(Alignment.TopEnd)) {
+        AppBadges(app = app, accentColor = accentColor, isDark = isDark)
       }
     }
 

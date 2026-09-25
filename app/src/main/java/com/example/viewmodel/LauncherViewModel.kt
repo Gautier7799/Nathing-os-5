@@ -334,6 +334,28 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
   }
 
+  fun clearCustomWallpaper(target: com.example.model.WallpaperTarget) {
+    _settings.update { current ->
+      when (target) {
+        com.example.model.WallpaperTarget.HOME -> current.copy(
+          wallpaperIndex = 0,
+          customWallpaperUri = null
+        )
+        com.example.model.WallpaperTarget.LOCK -> current.copy(
+          lockScreenWallpaperIndex = 0,
+          customLockScreenWallpaperUri = null
+        )
+        com.example.model.WallpaperTarget.BOTH -> current.copy(
+          wallpaperIndex = 0,
+          customWallpaperUri = null,
+          lockScreenWallpaperIndex = -1,
+          customLockScreenWallpaperUri = null
+        )
+      }
+    }
+    android.widget.Toast.makeText(context, "Photo removed. Default Nothing OS wallpaper restored.", android.widget.Toast.LENGTH_SHORT).show()
+  }
+
   fun toggleAudioPlayback() {
     _audio.update { it.copy(isPlaying = !it.isPlaying) }
   }

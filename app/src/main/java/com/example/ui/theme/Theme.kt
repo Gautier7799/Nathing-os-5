@@ -52,6 +52,27 @@ private val NothingLightColorScheme = lightColorScheme(
   outlineVariant = NothingLightUnlitDot
 )
 
+// Theme Retro Pastel (Image 3 & 5: Retro Car & Soft Sage/Mint aesthetic)
+private val NothingRetroColorScheme = lightColorScheme(
+  primary = NothingRetroAccent,
+  onPrimary = NothingWhite,
+  primaryContainer = NothingRetroElevated,
+  onPrimaryContainer = NothingRetroTextPrimary,
+  secondary = NothingRetroTextPrimary,
+  onSecondary = NothingRetroSurface,
+  secondaryContainer = NothingRetroElevated,
+  onSecondaryContainer = NothingRetroTextPrimary,
+  tertiary = NothingGreenAccent,
+  background = NothingRetroBackground,
+  onBackground = NothingRetroTextPrimary,
+  surface = NothingRetroSurface,
+  onSurface = NothingRetroTextPrimary,
+  surfaceVariant = NothingRetroElevated,
+  onSurfaceVariant = NothingRetroTextSecondary,
+  outline = NothingRetroBorder,
+  outlineVariant = NothingRetroUnlitDot
+)
+
 data class LauncherThemeColors(
   val isDark: Boolean = true,
   val background: Color = NothingBlack,
@@ -78,42 +99,94 @@ fun MyApplicationTheme(
   dynamicColor: Boolean = false,
   content: @Composable () -> Unit
 ) {
-  val resolvedDark = when (themeMode) {
-    LauncherThemeMode.DARK -> true
-    LauncherThemeMode.LIGHT -> false
-    LauncherThemeMode.SYSTEM -> darkTheme
+  val colorScheme = when (themeMode) {
+    LauncherThemeMode.DARK -> NothingDarkColorScheme
+    LauncherThemeMode.LIGHT -> NothingLightColorScheme
+    LauncherThemeMode.RETRO_PASTEL -> NothingRetroColorScheme
+    LauncherThemeMode.SYSTEM -> if (darkTheme) NothingDarkColorScheme else NothingLightColorScheme
   }
-  val colorScheme = if (resolvedDark) NothingDarkColorScheme else NothingLightColorScheme
-  val themeColors = if (resolvedDark) {
-    LauncherThemeColors(
-      isDark = true,
-      background = NothingBlack,
-      surface = NothingDarkSurface,
-      elevated = NothingElevated,
-      border = NothingBorder,
-      textPrimary = NothingWhite,
-      textSecondary = NothingGrey,
-      unlitDot = NothingUnlitDot,
-      dockBg = NothingDarkSurface.copy(alpha = 0.88f),
-      dockButtonBg = NothingElevated,
-      dockIconTint = NothingWhite,
-      searchPillBg = NothingDarkSurface
-    )
-  } else {
-    LauncherThemeColors(
-      isDark = false,
-      background = NothingLightBackground,
-      surface = NothingLightSurface,
-      elevated = NothingLightElevated,
-      border = NothingLightBorder,
-      textPrimary = NothingLightTextPrimary,
-      textSecondary = NothingLightTextSecondary,
-      unlitDot = NothingLightUnlitDot,
-      dockBg = NothingLightSurface.copy(alpha = 0.92f),
-      dockButtonBg = Color.White,
-      dockIconTint = Color(0xFF1A1A1A),
-      searchPillBg = NothingLightSurface
-    )
+  val themeColors = when (themeMode) {
+    LauncherThemeMode.DARK -> {
+      LauncherThemeColors(
+        isDark = true,
+        background = NothingBlack,
+        surface = NothingDarkSurface,
+        elevated = NothingElevated,
+        border = NothingBorder,
+        textPrimary = NothingWhite,
+        textSecondary = NothingGrey,
+        unlitDot = NothingUnlitDot,
+        dockBg = NothingDarkSurface.copy(alpha = 0.88f),
+        dockButtonBg = NothingElevated,
+        dockIconTint = NothingWhite,
+        searchPillBg = NothingDarkSurface
+      )
+    }
+    LauncherThemeMode.LIGHT -> {
+      LauncherThemeColors(
+        isDark = false,
+        background = NothingLightBackground,
+        surface = NothingLightSurface,
+        elevated = NothingLightElevated,
+        border = NothingLightBorder,
+        textPrimary = NothingLightTextPrimary,
+        textSecondary = NothingLightTextSecondary,
+        unlitDot = NothingLightUnlitDot,
+        dockBg = NothingLightSurface.copy(alpha = 0.92f),
+        dockButtonBg = Color.White,
+        dockIconTint = Color(0xFF1A1A1A),
+        searchPillBg = NothingLightSurface
+      )
+    }
+    LauncherThemeMode.RETRO_PASTEL -> {
+      LauncherThemeColors(
+        isDark = false,
+        background = NothingRetroBackground,
+        surface = NothingRetroSurface,
+        elevated = NothingRetroElevated,
+        border = NothingRetroBorder,
+        textPrimary = NothingRetroTextPrimary,
+        textSecondary = NothingRetroTextSecondary,
+        unlitDot = NothingRetroUnlitDot,
+        dockBg = NothingRetroDockBg.copy(alpha = 0.92f),
+        dockButtonBg = Color.White,
+        dockIconTint = NothingRetroAccent,
+        searchPillBg = NothingRetroSurface
+      )
+    }
+    LauncherThemeMode.SYSTEM -> {
+      if (darkTheme) {
+        LauncherThemeColors(
+          isDark = true,
+          background = NothingBlack,
+          surface = NothingDarkSurface,
+          elevated = NothingElevated,
+          border = NothingBorder,
+          textPrimary = NothingWhite,
+          textSecondary = NothingGrey,
+          unlitDot = NothingUnlitDot,
+          dockBg = NothingDarkSurface.copy(alpha = 0.88f),
+          dockButtonBg = NothingElevated,
+          dockIconTint = NothingWhite,
+          searchPillBg = NothingDarkSurface
+        )
+      } else {
+        LauncherThemeColors(
+          isDark = false,
+          background = NothingLightBackground,
+          surface = NothingLightSurface,
+          elevated = NothingLightElevated,
+          border = NothingLightBorder,
+          textPrimary = NothingLightTextPrimary,
+          textSecondary = NothingLightTextSecondary,
+          unlitDot = NothingLightUnlitDot,
+          dockBg = NothingLightSurface.copy(alpha = 0.92f),
+          dockButtonBg = Color.White,
+          dockIconTint = Color(0xFF1A1A1A),
+          searchPillBg = NothingLightSurface
+        )
+      }
+    }
   }
 
   CompositionLocalProvider(LocalLauncherTheme provides themeColors) {

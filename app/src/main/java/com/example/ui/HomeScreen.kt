@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.VerticalAlignBottom
@@ -219,9 +220,14 @@ fun HomeScreen(
             modifier = Modifier.testTag("home_theme_toggle_button")
           ) {
             Icon(
-              imageVector = if (!theme.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-              contentDescription = "Toggle Theme Jour / Nuit",
-              tint = if (!theme.isDark) accentColor else theme.textSecondary,
+              imageVector = when (settings.themeMode) {
+                LauncherThemeMode.DARK -> Icons.Default.DarkMode
+                LauncherThemeMode.LIGHT -> Icons.Default.LightMode
+                LauncherThemeMode.RETRO_PASTEL -> Icons.Default.Palette
+                LauncherThemeMode.SYSTEM -> if (theme.isDark) Icons.Default.DarkMode else Icons.Default.LightMode
+              },
+              contentDescription = "Toggle Theme Jour / Nuit / Retro",
+              tint = if (settings.themeMode != LauncherThemeMode.DARK) accentColor else theme.textSecondary,
               modifier = Modifier.size(20.dp)
             )
           }

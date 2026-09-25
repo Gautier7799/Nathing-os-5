@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Home
@@ -134,7 +135,7 @@ val WALLPAPER_CHOICES = listOf(
   WallpaperChoice(2, "RED CIRCUIT GLOW", "CYBER", "Red electronic traces & glowing nodes"),
   WallpaperChoice(3, "LIGHT MONOCHROME", "MINIMAL", "Monochrome high-contrast inverted dots"),
   WallpaperChoice(4, "NOTHING GLYPH", "ARTWORK", "Phone (2) signature Glyph light geometry"),
-  WallpaperChoice(5, "RED ECLIPSE", "GRADIENT", "Crimson abstract minimalist gradient"),
+  WallpaperChoice(5, "RETRO SAGE NOIR", "NOTHING 3.5", "Futuristic subtle dark matte gradient with ambient aura"),
   WallpaperChoice(6, "RETRO WIREFRAME", "VECTOR", "Futuristic 3D isometric perspective grid"),
   WallpaperChoice(7, "CUSTOM GALLERY PHOTO", "GALLERY", "User photo loaded from phone storage")
 )
@@ -145,6 +146,7 @@ fun LauncherSettingsDialog(
   settings: LauncherSettings,
   onUpdateSettings: (LauncherSettings) -> Unit,
   onPickCustomWallpaper: (android.net.Uri, WallpaperTarget) -> Unit = { _, _ -> },
+  onRemoveCustomWallpaper: (WallpaperTarget) -> Unit = {},
   onLockScreenNow: () -> Unit,
   onDismiss: () -> Unit,
   accentColor: Color
@@ -668,12 +670,13 @@ fun LauncherSettingsDialog(
           Spacer(modifier = Modifier.height(8.dp))
           Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
           ) {
             listOf(
-              Triple(LauncherThemeMode.DARK, "THEME NUIT", Icons.Default.DarkMode),
-              Triple(LauncherThemeMode.LIGHT, "THEME JOUR", Icons.Default.LightMode),
-              Triple(LauncherThemeMode.SYSTEM, "SYSTEM AUTO", Icons.Default.BrightnessAuto)
+              Triple(LauncherThemeMode.DARK, "NUIT", Icons.Default.DarkMode),
+              Triple(LauncherThemeMode.LIGHT, "JOUR", Icons.Default.LightMode),
+              Triple(LauncherThemeMode.RETRO_PASTEL, "RETRO", Icons.Default.Palette),
+              Triple(LauncherThemeMode.SYSTEM, "AUTO", Icons.Default.BrightnessAuto)
             ).forEach { (mode, label, icon) ->
               val isSelected = settings.themeMode == mode
               Box(
@@ -688,18 +691,18 @@ fun LauncherSettingsDialog(
               ) {
                 Row(
                   verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(4.dp)
+                  horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                   Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else theme.textSecondary,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(12.dp)
                   )
                   Text(
                     text = label,
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 9.5.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) (if (accentColor == NothingWhite) Color.Black else Color.White) else theme.textPrimary
                   )
@@ -953,6 +956,37 @@ fun LauncherSettingsDialog(
                   fontSize = 10.sp,
                   color = NothingGrey
                 )
+              }
+
+              // Red Box Action: Delete / Clear Custom Photo
+              Box(
+                modifier = Modifier
+                  .clip(RoundedCornerShape(8.dp))
+                  .background(NothingRed.copy(alpha = 0.16f))
+                  .border(1.dp, NothingRed, RoundedCornerShape(8.dp))
+                  .clickable { onRemoveCustomWallpaper(wallpaperTarget) }
+                  .padding(horizontal = 8.dp, vertical = 6.dp)
+                  .testTag("delete_custom_photo_button"),
+                contentAlignment = Alignment.Center
+              ) {
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                  Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "حذف الصورة",
+                    tint = NothingRed,
+                    modifier = Modifier.size(16.dp)
+                  )
+                  Text(
+                    text = "DELETE",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NothingRed
+                  )
+                }
               }
             }
           }

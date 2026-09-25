@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -511,11 +512,11 @@ fun NosCircularGaugesWidget(
       modifier = Modifier.weight(1f)
     )
 
-    // 2. Red Flame 57°C (Pixel 8 Thermal & Performance)
+    // 2. Red Flame 57°C (Pixel 8 Thermal & Performance) - True Circle
     Box(
       modifier = Modifier
         .weight(1f)
-        .height(100.dp)
+        .aspectRatio(1f)
         .clip(CircleShape)
         .background(NothingRed)
         .border(1.dp, NothingRed, CircleShape)
@@ -566,7 +567,7 @@ private fun NosProgressRingCircle(
 
   Box(
     modifier = modifier
-      .height(100.dp)
+      .aspectRatio(1f)
       .clip(CircleShape)
       .background(theme.surface)
       .border(1.dp, theme.border, CircleShape)
@@ -575,7 +576,8 @@ private fun NosProgressRingCircle(
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       val strokeW = 4.dp.toPx()
-      val radius = (size.minDimension - strokeW) / 2f
+      val dotRadius = 3.dp.toPx()
+      val radius = (size.minDimension / 2f) - strokeW - dotRadius - 4.dp.toPx()
       val center = Offset(size.width / 2f, size.height / 2f)
 
       // Background track
@@ -598,13 +600,13 @@ private fun NosProgressRingCircle(
         style = Stroke(width = strokeW, cap = StrokeCap.Round)
       )
 
-      // Indicator white dot on tip of arc
+      // Indicator white/accent dot on tip of arc
       val angleRad = Math.toRadians((-90f + sweep).toDouble())
       val dotX = (center.x + radius * cos(angleRad)).toFloat()
       val dotY = (center.y + radius * sin(angleRad)).toFloat()
       drawCircle(
         color = accentColor,
-        radius = 3.5.dp.toPx(),
+        radius = dotRadius,
         center = Offset(dotX, dotY)
       )
     }
@@ -1180,7 +1182,7 @@ fun NosGiantCirclesClusterWidget(
       .padding(vertical = 4.dp),
     verticalArrangement = Arrangement.spacedBy(14.dp)
   ) {
-    // Top Row: 2 Giant Circles
+    // Top Row: 2 Giant Circles (aspectRatio 1:1 prevents oval distortion & clipping)
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -1189,7 +1191,7 @@ fun NosGiantCirclesClusterWidget(
       Box(
         modifier = Modifier
           .weight(1f)
-          .height(130.dp)
+          .aspectRatio(1f)
           .clip(CircleShape)
           .background(circleBg)
           .border(1.dp, theme.border, CircleShape)
@@ -1208,7 +1210,7 @@ fun NosGiantCirclesClusterWidget(
       Box(
         modifier = Modifier
           .weight(1f)
-          .height(130.dp)
+          .aspectRatio(1f)
           .clip(CircleShape)
           .background(circleBg)
           .border(1.dp, theme.border, CircleShape)
@@ -1294,7 +1296,7 @@ fun NosGiantCirclesClusterWidget(
       Box(
         modifier = Modifier
           .weight(1f)
-          .height(130.dp)
+          .aspectRatio(1f)
           .clip(RoundedCornerShape(20.dp))
           .background(theme.surface)
           .border(1.dp, theme.border, RoundedCornerShape(20.dp))
@@ -1335,7 +1337,7 @@ fun NosGiantCirclesClusterWidget(
       Box(
         modifier = Modifier
           .weight(1f)
-          .height(130.dp)
+          .aspectRatio(1f)
           .clip(CircleShape)
           .background(circleBg)
           .border(1.dp, theme.border, CircleShape),

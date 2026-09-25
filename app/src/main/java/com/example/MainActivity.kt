@@ -181,10 +181,11 @@ fun NothingLauncherApp(
       onSwipeDown = { viewModel.openNotificationsPanel() },
       onDoubleTap = { viewModel.lockScreen() },
       onToggleThemeMode = {
-        val newTheme = if (settings.themeMode == LauncherThemeMode.LIGHT) {
-          LauncherThemeMode.DARK
-        } else {
-          LauncherThemeMode.LIGHT
+        val newTheme = when (settings.themeMode) {
+          LauncherThemeMode.DARK -> LauncherThemeMode.LIGHT
+          LauncherThemeMode.LIGHT -> LauncherThemeMode.RETRO_PASTEL
+          LauncherThemeMode.RETRO_PASTEL -> LauncherThemeMode.DARK
+          LauncherThemeMode.SYSTEM -> LauncherThemeMode.DARK
         }
         viewModel.updateSettings(settings.copy(themeMode = newTheme))
       },
@@ -223,10 +224,11 @@ fun NothingLauncherApp(
         iconPack = settings.iconPack,
         accentColor = accentColor,
         onToggleThemeMode = {
-          val newTheme = if (settings.themeMode == LauncherThemeMode.LIGHT) {
-            LauncherThemeMode.DARK
-          } else {
-            LauncherThemeMode.LIGHT
+          val newTheme = when (settings.themeMode) {
+            LauncherThemeMode.DARK -> LauncherThemeMode.LIGHT
+            LauncherThemeMode.LIGHT -> LauncherThemeMode.RETRO_PASTEL
+            LauncherThemeMode.RETRO_PASTEL -> LauncherThemeMode.DARK
+            LauncherThemeMode.SYSTEM -> LauncherThemeMode.DARK
           }
           viewModel.updateSettings(settings.copy(themeMode = newTheme))
         },
@@ -255,6 +257,7 @@ fun NothingLauncherApp(
         settings = settings,
         onUpdateSettings = { viewModel.updateSettings(it) },
         onPickCustomWallpaper = { uri, target -> viewModel.setCustomWallpaper(uri, target) },
+        onRemoveCustomWallpaper = { target -> viewModel.clearCustomWallpaper(target) },
         onLockScreenNow = { viewModel.lockLauncherScreen() },
         onDismiss = { isSettingsOpen = false },
         accentColor = accentColor

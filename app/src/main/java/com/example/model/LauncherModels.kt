@@ -43,9 +43,10 @@ enum class WallpaperTarget {
 }
 
 enum class LauncherThemeMode {
-  DARK,   // Theme Nuit (Image 2: Pure Nothing Matte Black, dark cards, neon accents)
-  LIGHT,  // Theme Jour (Image 3: Crisp Nothing White/Pastel Glass, sleek circular buttons, analog clock)
-  SYSTEM  // Auto match system night mode
+  DARK,         // Theme Nuit (Image 2: Pure Nothing Matte Black, dark cards, neon accents)
+  LIGHT,        // Theme Jour (Image 3: Crisp Nothing White/Pastel Glass, sleek circular buttons, analog clock)
+  RETRO_PASTEL, // Theme Retro / Pastel (Image 3 & 5: Soft Pastel Sage Mint & Lavender aesthetic)
+  SYSTEM        // Auto match system night mode
 }
 
 enum class LauncherClockStyle {

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -126,13 +127,30 @@ fun NothingWallpaperBackground(
       }
 
       5 -> {
-        // RED ECLIPSE AURA (Asset image)
-        Image(
-          painter = painterResource(id = R.drawable.img_nothing_red_wallpaper),
-          contentDescription = "Nothing Red Wallpaper",
-          modifier = Modifier.fillMaxSize(),
-          contentScale = ContentScale.Crop
-        )
+        // RETRO SAGE NOIR (Nothing OS 3.5 Procedural Dark Gradient Aura)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+          val w = size.width
+          val h = size.height
+          drawRect(
+            brush = Brush.radialGradient(
+              colors = listOf(
+                if (theme.isDark) Color(0xFF1E261E) else Color(0xFFD0DDD0),
+                if (theme.isDark) Color(0xFF0C0E0C) else Color(0xFFE2EBE2)
+              ),
+              center = Offset(w * 0.5f, h * 0.35f),
+              radius = w * 0.9f
+            )
+          )
+          val dotSpacing = 26f
+          val cols = (w / dotSpacing).toInt()
+          val rows = (h / dotSpacing).toInt()
+          val dotColor = if (theme.isDark) Color(0xFFFFFFFF) else Color(0xFF2E5A2E)
+          for (i in 0..cols) {
+            for (j in 0..rows) {
+              drawCircle(dotColor.copy(alpha = 0.07f), 1.2f, Offset(i * dotSpacing, j * dotSpacing))
+            }
+          }
+        }
       }
 
       6 -> {

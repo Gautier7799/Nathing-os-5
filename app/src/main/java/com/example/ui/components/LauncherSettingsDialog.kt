@@ -1438,6 +1438,143 @@ private fun PermissionIntegrationCard(
 }
 
 @Composable
+private fun NothingWidgetsPortSettingsTab(
+  settings: LauncherSettings,
+  onUpdateSettings: (LauncherSettings) -> Unit,
+  accentColor: Color
+) {
+  val theme = LocalLauncherTheme.current
+  val context = LocalContext.current
+
+  Column(
+    modifier = Modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(16.dp)
+  ) {
+    // Header Banner
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(16.dp))
+        .background(theme.surface)
+        .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+        .padding(16.dp)
+    ) {
+      Column {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Default.Widgets,
+            contentDescription = null,
+            tint = accentColor,
+            modifier = Modifier.size(20.dp)
+          )
+          Text(
+            text = "NOS 3.5 & KWGT WIDGETS SUITE",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary,
+            letterSpacing = 1.sp
+          )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+          text = "تخصيص وتفعيل حزم ودجات Nothing OS الحصرية، بما في ذلك الودجات المستوحاة من KWGT وحزمة منافذ Pixel الرسمية لنظام Android 17.",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 10.sp,
+          color = theme.textSecondary,
+          lineHeight = 14.sp
+        )
+      }
+    }
+
+    Text(
+      text = "ACTIVE WIDGETS ON HOME SCREEN",
+      fontFamily = FontFamily.Monospace,
+      fontSize = 11.sp,
+      fontWeight = FontWeight.Bold,
+      color = theme.textSecondary,
+      letterSpacing = 1.sp
+    )
+
+    val widgetOptions = listOf(
+      Triple(NosWidgetPortType.CALENDAR_DIGITAL_TIME, "CALENDAR + DIGITAL TIME", "JUL TUESDAY 07H 10M Dot Matrix"),
+      Triple(NosWidgetPortType.MINI_CLUSTER_2X2, "4-CIRCLE MINI CLUSTER (2x2)", "14° Temp, Cloud, ECG Pulse & Cam"),
+      Triple(NosWidgetPortType.GLANCE_TEXT_SUMMARY, "TEXT GLANCE SUMMARY", "TODAY IS TUESDAY AND TIME IS..."),
+      Triple(NosWidgetPortType.CIRCULAR_GAUGES, "CIRCULAR GAUGES (3 RINGS)", "73% Music, 57°C Red Flame, 98% Bell"),
+      Triple(NosWidgetPortType.DECIBEL_SOUND_METER, "DECIBEL SOUND METER", "103 dB with vertical LED dots"),
+      Triple(NosWidgetPortType.QUICK_CHECKLIST, "NOS TASKS CHECKLIST", "Checklist with interactive items"),
+      Triple(NosWidgetPortType.CONTACT_PILL, "FAVORITE CONTACT PILL", "Quick call & chat contact pill"),
+      Triple(NosWidgetPortType.CLOCK_MAIN, "NOTHING OS MAIN CLOCK", "Dot Matrix or Minimalist Analog Clock"),
+      Triple(NosWidgetPortType.WEATHER_MAIN, "WEATHER & QUICK TOGGLES", "Dynamic Weather + Torch & Sound"),
+      Triple(NosWidgetPortType.CASSETTE_PLAYER, "CASSETTE TAPE PLAYER", "Retro Teenage Engineering player"),
+      Triple(NosWidgetPortType.PEDOMETER_GAUGE, "HEALTH & HARDWARE GAUGES", "Step counter & RAM storage monitors")
+    )
+
+    fun toggleWidget(type: NosWidgetPortType) {
+      val list = settings.activeWidgets.toMutableList()
+      if (list.contains(type)) {
+        list.remove(type)
+      } else {
+        list.add(type)
+      }
+      onUpdateSettings(settings.copy(activeWidgets = list))
+    }
+
+    widgetOptions.forEach { (type, title, subtitle) ->
+      val checked = settings.activeWidgets.contains(type)
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clip(RoundedCornerShape(12.dp))
+          .background(theme.surface)
+          .border(1.dp, theme.border, RoundedCornerShape(12.dp))
+          .clickable { toggleWidget(type) }
+          .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = title,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary
+          )
+          Text(
+            text = subtitle,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 9.sp,
+            color = theme.textSecondary
+          )
+        }
+
+        Switch(
+          checked = checked,
+          onCheckedChange = { toggleWidget(type) },
+          colors = SwitchDefaults.colors(
+            checkedThumbColor = if (accentColor == Color.White) Color.Black else Color.White,
+            checkedTrackColor = accentColor,
+            uncheckedTrackColor = theme.elevated
+          )
+        )
+      }
+    }
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    // Pixel Android 17 Ports Integration section
+    PixelPortsSettingsTab(
+      accentColor = accentColor,
+      context = context
+    )
+  }
+}
+
+@Composable
 private fun PixelPortsSettingsTab(
   accentColor: Color,
   context: Context

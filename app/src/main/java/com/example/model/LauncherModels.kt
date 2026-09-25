@@ -3,9 +3,10 @@ package com.example.model
 import android.graphics.drawable.Drawable
 
 enum class IconPackStyle {
-  MONOCHROME,      // Signature Nothing black/white circles with high contrast glyphs
+  MONOCHROME,      // Signature Nothing black/white circles with high contrast glyphs ("Nothing")
+  COLOUR,          // Nothing OS 3.0/5.0 scalloped 12-point flower badge with vibrant pastel background ("Colour")
   MINIMAL_DARK,    // Dark matte background with sleek white outlines
-  SYSTEM_DEFAULT   // Original app icons
+  SYSTEM_DEFAULT   // Original system app icons ("Default")
 }
 
 enum class LauncherScreen {
@@ -134,7 +135,10 @@ enum class NosWidgetPortType {
   CLOCK_MAIN,            // Main Nothing Clock
   WEATHER_MAIN,          // Main Weather & Quick Toggles
   CASSETTE_PLAYER,       // Teenage Cassette Player
-  PEDOMETER_GAUGE        // Pedometer & RAM
+  PEDOMETER_GAUGE,       // Pedometer & RAM
+  GIANT_CIRCLES_CLUSTER, // Screenshot 3: Giant Camera circle, Dot-Matrix Rain Weather circle & Dot-Matrix Glyph
+  STICKER_FOCUS_CLUSTER, // Screenshot 5: Focus concentric lines, Retro Car sticker & Capsule pill
+  NOTHING_X_EARBUDS      // Screenshot 5: Headphones 90% battery & Noise Cancellation toggle
 }
 
 data class LauncherSettings(
@@ -167,6 +171,9 @@ data class LauncherSettings(
     NosWidgetPortType.CLOCK_MAIN,
     NosWidgetPortType.WEATHER_MAIN,
     NosWidgetPortType.CASSETTE_PLAYER,
-    NosWidgetPortType.PEDOMETER_GAUGE
+    NosWidgetPortType.PEDOMETER_GAUGE,
+    NosWidgetPortType.GIANT_CIRCLES_CLUSTER,
+    NosWidgetPortType.STICKER_FOCUS_CLUSTER,
+    NosWidgetPortType.NOTHING_X_EARBUDS
   )
 )

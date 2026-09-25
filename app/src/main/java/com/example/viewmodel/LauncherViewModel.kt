@@ -27,6 +27,7 @@ import com.example.model.NosWidgetPortType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
 import com.example.service.SystemLocationHelper
+import com.example.service.SystemPortHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -521,6 +522,22 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
               addCategory(Intent.CATEGORY_APP_CALENDAR)
               addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+          pkg.contains("weather") || label.contains("weather") -> {
+            SystemPortHelper.launchPixelWeather(context)
+            null
+          }
+          pkg.contains("hearse") || label.contains("nothing x") -> {
+            android.widget.Toast.makeText(context, "Nothing X: Active Noise Cancellation 100% • Low Latency Mode", android.widget.Toast.LENGTH_SHORT).show()
+            null
+          }
+          pkg.contains("composer") || label.contains("composer") -> {
+            android.widget.Toast.makeText(context, "Nothing Composer: Glyph Sound Synthesizer Active", android.widget.Toast.LENGTH_SHORT).show()
+            null
+          }
+          pkg.contains("soundrecorder") || label.contains("recorder") -> {
+            android.widget.Toast.makeText(context, "Nothing Tape Recorder: Audio Reel Ready", android.widget.Toast.LENGTH_SHORT).show()
+            null
+          }
           pkg.contains("clock") || label.contains("clock") ->
             Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
           else -> null
@@ -622,17 +639,30 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     AppItem("com.google.android.apps.messaging", "", "Messages", null, category = "Communication"),
     AppItem("com.android.chrome", "", "Chrome", null, category = "Tools"),
     AppItem("com.google.android.GoogleCamera", "", "Camera", null, category = "Media"),
+    AppItem("com.nothing.hearse", "", "Nothing X", null, category = "Media"),
+    AppItem("com.nothing.composer", "", "Composer", null, category = "Media"),
+    AppItem("com.nothing.weather", "", "Weather", null, category = "Tools"),
+    AppItem("com.nothing.soundrecorder", "", "Recorder", null, category = "Tools"),
     AppItem("com.google.android.apps.photos", "", "Photos", null, category = "Media"),
     AppItem("com.android.settings", "", "Settings", null, category = "Tools"),
     AppItem("com.google.android.deskclock", "", "Clock", null, category = "Tools"),
     AppItem("com.google.android.calculator", "", "Calculator", null, category = "Tools"),
+    AppItem("com.google.android.calendar", "", "Calendar", null, category = "Tools"),
+    AppItem("com.google.android.contacts", "", "Contacts", null, category = "Communication"),
     AppItem("com.google.android.apps.nbu.files", "", "Files", null, category = "Tools"),
-    AppItem("com.google.android.keep", "", "Notes", null, category = "Tools"),
+    AppItem("com.google.android.keep", "", "Keep notes", null, category = "Tools"),
     AppItem("com.google.android.youtube", "", "YouTube", null, category = "Media"),
-    AppItem("com.spotify.music", "", "Spotify", null, category = "Media"),
+    AppItem("com.google.android.apps.youtube.music", "", "YT Music", null, category = "Media"),
     AppItem("com.google.android.apps.maps", "", "Maps", null, category = "General"),
     AppItem("com.google.android.gm", "", "Gmail", null, category = "Communication"),
-    AppItem("com.google.android.calendar", "", "Calendar", null, category = "Tools")
+    AppItem("com.google.android.apps.docs", "", "Drive", null, category = "Tools"),
+    AppItem("com.android.vending", "", "Play Store", null, category = "Tools"),
+    AppItem("com.google.android.apps.safetyhub", "", "Safety", null, category = "Tools"),
+    AppItem("com.google.android.videos", "", "Google TV", null, category = "Media"),
+    AppItem("com.google.android.apps.tachyon", "", "Meet", null, category = "Communication"),
+    AppItem("org.thunderdog.challegram", "", "Telegram X", null, category = "Communication"),
+    AppItem("com.openai.chatgpt", "", "ChatGPT", null, category = "Tools"),
+    AppItem("com.discord", "", "Discord", null, category = "Communication")
   )
 
   private fun startClockUpdates() {

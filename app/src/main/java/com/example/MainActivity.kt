@@ -221,7 +221,19 @@ fun NothingLauncherApp(
           viewModel.setScreen(LauncherScreen.HOME)
         },
         iconPack = settings.iconPack,
-        accentColor = accentColor
+        accentColor = accentColor,
+        onToggleThemeMode = {
+          val newTheme = if (settings.themeMode == LauncherThemeMode.LIGHT) {
+            LauncherThemeMode.DARK
+          } else {
+            LauncherThemeMode.LIGHT
+          }
+          viewModel.updateSettings(settings.copy(themeMode = newTheme))
+        },
+        onSelectIconPack = { pack ->
+          viewModel.updateSettings(settings.copy(iconPack = pack))
+        },
+        onOpenSettings = { isSettingsOpen = true }
       )
     }
 

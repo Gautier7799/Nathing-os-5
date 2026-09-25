@@ -81,9 +81,12 @@ import com.example.ui.components.NosCalendarDigitalTimeWidget
 import com.example.ui.components.NosCircularGaugesWidget
 import com.example.ui.components.NosContactPillWidget
 import com.example.ui.components.NosDecibelWidget
+import com.example.ui.components.NosGiantCirclesClusterWidget
 import com.example.ui.components.NosGlanceTextWidget
 import com.example.ui.components.NosMiniClusterWidget
+import com.example.ui.components.NosNothingXEarbudsWidget
 import com.example.ui.components.NosQuickListWidget
+import com.example.ui.components.NosStickerFocusClusterWidget
 import com.example.ui.components.NosWidgetPortSheet
 import com.example.ui.components.NothingAnalogClockWidget
 import com.example.ui.components.NothingCassetteWidget
@@ -350,6 +353,38 @@ fun HomeScreen(
               isCharging = toggles.isCharging,
               onGlanceClick = { SystemPortHelper.launchPixelWeather(context) }
             )
+          }
+        }
+
+        // 3.5. Giant Circles Cluster (Screenshot 3: Giant Camera, Rain Weather, Globe Disc)
+        if (settings.activeWidgets.contains(NosWidgetPortType.GIANT_CIRCLES_CLUSTER)) {
+          item {
+            NosGiantCirclesClusterWidget(
+              weather = weather,
+              currentTime = currentTime,
+              accentColor = accentColor,
+              onLaunchCamera = {
+                val camApp = AppItem("com.google.android.GoogleCamera", "", "Camera")
+                onAppClick(camApp)
+              },
+              onLaunchWeather = {
+                SystemPortHelper.launchPixelWeather(context)
+              }
+            )
+          }
+        }
+
+        // 3.6. Sticker & Focus Cluster (Screenshot 5: Focus rings, Retro Car, Capsule)
+        if (settings.activeWidgets.contains(NosWidgetPortType.STICKER_FOCUS_CLUSTER)) {
+          item {
+            NosStickerFocusClusterWidget(accentColor = accentColor)
+          }
+        }
+
+        // 3.7. Nothing X Earbuds Widget (Screenshot 5: Headphones 90%, ANC mode)
+        if (settings.activeWidgets.contains(NosWidgetPortType.NOTHING_X_EARBUDS)) {
+          item {
+            NosNothingXEarbudsWidget(accentColor = accentColor)
           }
         }
 

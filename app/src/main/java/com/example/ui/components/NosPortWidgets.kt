@@ -32,12 +32,20 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.FiberManualRecord
+import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Button
@@ -1067,6 +1075,30 @@ fun NosWidgetPortSheet(
         onCheckedChange = { onToggleWidget(NosWidgetPortType.WEATHER_MAIN) }
       )
 
+      WidgetToggleItem(
+        title = "GIANT CIRCLES CLUSTER",
+        subtitle = "Giant Camera, Rain Weather & Globe Disc (Screenshot 3)",
+        checked = activeWidgets.contains(NosWidgetPortType.GIANT_CIRCLES_CLUSTER),
+        accentColor = accentColor,
+        onCheckedChange = { onToggleWidget(NosWidgetPortType.GIANT_CIRCLES_CLUSTER) }
+      )
+
+      WidgetToggleItem(
+        title = "STICKER & FOCUS CLUSTER",
+        subtitle = "Focus rings, Retro Car sticker & Capsule (Screenshot 5)",
+        checked = activeWidgets.contains(NosWidgetPortType.STICKER_FOCUS_CLUSTER),
+        accentColor = accentColor,
+        onCheckedChange = { onToggleWidget(NosWidgetPortType.STICKER_FOCUS_CLUSTER) }
+      )
+
+      WidgetToggleItem(
+        title = "NOTHING X EARBUDS WIDGET",
+        subtitle = "Earbuds battery 90% & Noise Cancellation (Screenshot 5)",
+        checked = activeWidgets.contains(NosWidgetPortType.NOTHING_X_EARBUDS),
+        accentColor = accentColor,
+        onCheckedChange = { onToggleWidget(NosWidgetPortType.NOTHING_X_EARBUDS) }
+      )
+
       Spacer(modifier = Modifier.height(24.dp))
     }
   }
@@ -1120,3 +1152,459 @@ private fun WidgetToggleItem(
     )
   }
 }
+
+/**
+ * 8. Giant Circles Cluster Widget (Screenshot 3)
+ * Displays the signature Nothing OS 5 layout:
+ * - Giant Camera circle & Dot-Matrix Rain Weather circle
+ * - 4-circle mini cluster (Clock, Composer, Camera, Clock)
+ * - Square Weather/Date card ("WEDNESDAY 5 JUL MOSTLY CLOUDY 16°")
+ * - Giant Dot-matrix globe/glyph circle
+ */
+@Composable
+fun NosGiantCirclesClusterWidget(
+  weather: WeatherInfo,
+  currentTime: String,
+  accentColor: Color,
+  modifier: Modifier = Modifier,
+  onLaunchCamera: () -> Unit = {},
+  onLaunchWeather: () -> Unit = {}
+) {
+  val theme = LocalLauncherTheme.current
+  val circleBg = if (theme.isDark) Color(0xFFEBEBEB) else Color(0xFFFFFFFF)
+  val circleTint = Color(0xFF111111)
+
+  Column(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp),
+    verticalArrangement = Arrangement.spacedBy(14.dp)
+  ) {
+    // Top Row: 2 Giant Circles
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+      // Circle 1: Giant Camera (Screenshot 3)
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .height(130.dp)
+          .clip(CircleShape)
+          .background(circleBg)
+          .border(1.dp, theme.border, CircleShape)
+          .clickable { onLaunchCamera() },
+        contentAlignment = Alignment.Center
+      ) {
+        Icon(
+          imageVector = Icons.Default.CameraAlt,
+          contentDescription = "Camera",
+          tint = circleTint,
+          modifier = Modifier.size(46.dp)
+        )
+      }
+
+      // Circle 2: Giant Dot-Matrix Rain Weather (Screenshot 3)
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .height(130.dp)
+          .clip(CircleShape)
+          .background(circleBg)
+          .border(1.dp, theme.border, CircleShape)
+          .clickable { onLaunchWeather() },
+        contentAlignment = Alignment.Center
+      ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Canvas(modifier = Modifier.size(54.dp, 38.dp)) {
+            // Dot-matrix cloud outline
+            val dotRadius = 2.2f
+            for (r in 0..4) {
+              for (c in 0..10) {
+                val isCloudDot = when (r) {
+                  0 -> c in 4..6
+                  1 -> c in 2..8
+                  2 -> c in 1..9
+                  3 -> c in 0..10
+                  else -> false
+                }
+                if (isCloudDot) {
+                  drawCircle(
+                    color = circleTint,
+                    radius = dotRadius,
+                    center = Offset(c * 5.2f + 2f, r * 5.2f + 4f)
+                  )
+                }
+              }
+            }
+            // Rain drop dots
+            for (drop in listOf(Offset(12f, 28f), Offset(22f, 32f), Offset(32f, 29f), Offset(42f, 33f))) {
+              drawCircle(color = NothingRed, radius = 2f, center = drop)
+            }
+          }
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+            text = "${weather.tempC}°",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = circleTint
+          )
+        }
+      }
+    }
+
+    // Middle Row: 4 Mini Circles Cluster
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceEvenly,
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      listOf(
+        Icons.Default.Schedule,
+        Icons.Default.GraphicEq,
+        Icons.Default.CameraAlt,
+        Icons.Default.Schedule
+      ).forEach { icon ->
+        Box(
+          modifier = Modifier
+            .size(52.dp)
+            .clip(CircleShape)
+            .background(circleBg)
+            .border(1.dp, theme.border, CircleShape),
+          contentAlignment = Alignment.Center
+        ) {
+          Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = circleTint,
+            modifier = Modifier.size(22.dp)
+          )
+        }
+      }
+    }
+
+    // Bottom Row: Square Rounded Card + Giant Dot-Matrix Glyph Circle (Screenshot 3)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(14.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      // Left: Square rounded Weather Card
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .height(130.dp)
+          .clip(RoundedCornerShape(20.dp))
+          .background(theme.surface)
+          .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+          .clickable { onLaunchWeather() }
+          .padding(14.dp)
+      ) {
+        Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxSize()) {
+          Text(
+            text = "WEDNESDAY\n5 JUL\nMOSTLY\nCLOUDY",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary,
+            lineHeight = 14.sp
+          )
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+          ) {
+            Icon(
+              imageVector = Icons.Default.Cloud,
+              contentDescription = null,
+              tint = accentColor,
+              modifier = Modifier.size(16.dp)
+            )
+            Text(
+              text = "${weather.tempC}°",
+              fontFamily = FontFamily.Monospace,
+              fontSize = 13.sp,
+              fontWeight = FontWeight.Bold,
+              color = theme.textPrimary
+            )
+          }
+        }
+      }
+
+      // Right: Giant Dot-Matrix Globe / Glyph Circle
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .height(130.dp)
+          .clip(CircleShape)
+          .background(circleBg)
+          .border(1.dp, theme.border, CircleShape),
+        contentAlignment = Alignment.Center
+      ) {
+        Canvas(modifier = Modifier.size(60.dp)) {
+          val dotR = 2.4f
+          val cx = size.width / 2f
+          val cy = size.height / 2f
+          val maxR = 26f
+          for (deg in 0 until 360 step 30) {
+            val rad = Math.toRadians(deg.toDouble()).toFloat()
+            drawCircle(circleTint, dotR, Offset(cx + maxR * cos(rad), cy + maxR * sin(rad)))
+            drawCircle(circleTint, dotR, Offset(cx + (maxR * 0.6f) * cos(rad), cy + (maxR * 0.6f) * sin(rad)))
+          }
+          drawCircle(NothingRed, 3.5f, Offset(cx, cy))
+        }
+      }
+    }
+  }
+}
+
+/**
+ * 9. Sticker & Focus Cluster Widget (Screenshot 5)
+ * Displays:
+ * - Concentric lines Focus widget
+ * - Retro Car sticker badge
+ * - Pill capsule widget: "8h 19m Away" with status light
+ */
+@Composable
+fun NosStickerFocusClusterWidget(
+  accentColor: Color,
+  modifier: Modifier = Modifier
+) {
+  val theme = LocalLauncherTheme.current
+  var carBounced by remember { mutableStateOf(false) }
+
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp),
+    horizontalArrangement = Arrangement.spacedBy(10.dp)
+  ) {
+    // Focus Concentric Lines Widget
+    Box(
+      modifier = Modifier
+        .weight(1f)
+        .height(110.dp)
+        .clip(RoundedCornerShape(20.dp))
+        .background(theme.surface)
+        .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+        .padding(12.dp)
+    ) {
+      Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween
+      ) {
+        Text(
+          text = "Focus",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 10.sp,
+          color = theme.textSecondary
+        )
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+          contentAlignment = Alignment.Center
+        ) {
+          Canvas(modifier = Modifier.size(54.dp)) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            for (i in 1..4) {
+              drawCircle(
+                color = theme.textPrimary.copy(alpha = 0.25f * i),
+                radius = 6f * i,
+                center = center,
+                style = Stroke(width = 1.2f)
+              )
+            }
+            drawCircle(color = accentColor, radius = 3.5f, center = center)
+          }
+        }
+      }
+    }
+
+    // Retro Car Sticker & Away Pill Column
+    Column(
+      modifier = Modifier.weight(1f),
+      verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      // Capsule: 8h 19m Away
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(38.dp)
+          .clip(RoundedCornerShape(19.dp))
+          .background(theme.surface)
+          .border(1.dp, theme.border, RoundedCornerShape(19.dp))
+        .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+      ) {
+        Column {
+          Text(
+            text = "8h 19m",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary
+          )
+          Text(
+            text = "Away",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 8.sp,
+            color = theme.textSecondary
+          )
+        }
+        Box(
+          modifier = Modifier
+            .size(8.dp)
+            .clip(CircleShape)
+            .background(Color(0xFF4CAF50))
+        )
+      }
+
+      // Retro Car Sticker Badge
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(64.dp)
+          .clip(RoundedCornerShape(16.dp))
+          .background(Color(0xFFD7E8D7))
+          .clickable { carBounced = !carBounced },
+        contentAlignment = Alignment.Center
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Default.DirectionsCar,
+            contentDescription = "Retro Car",
+            tint = Color(0xFF2E5A2E),
+            modifier = Modifier.size(28.dp)
+          )
+          Text(
+            text = "NOTHING (1)",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2E5A2E)
+          )
+        }
+      }
+    }
+  }
+}
+
+/**
+ * 10. Nothing X Earbuds Widget (Screenshot 5)
+ * Displays headphones 90% battery & noise cancellation mode switcher
+ */
+@Composable
+fun NosNothingXEarbudsWidget(
+  accentColor: Color,
+  modifier: Modifier = Modifier
+) {
+  val theme = LocalLauncherTheme.current
+  var noiseMode by remember { mutableIntStateOf(1) } // 0: Off, 1: ANC, 2: Transparency
+
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp),
+    horizontalArrangement = Arrangement.spacedBy(10.dp)
+  ) {
+    // Earbuds Battery Card
+    Box(
+      modifier = Modifier
+        .weight(1f)
+        .height(100.dp)
+        .clip(RoundedCornerShape(20.dp))
+        .background(theme.surface)
+        .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+        .padding(14.dp)
+    ) {
+      Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween
+      ) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Icon(
+            imageVector = Icons.Default.Headphones,
+            contentDescription = "Nothing Ear",
+            tint = accentColor,
+            modifier = Modifier.size(24.dp)
+          )
+          Text(
+            text = "EAR (2)",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textSecondary
+          )
+        }
+        Row(verticalAlignment = Alignment.Bottom) {
+          Text(
+            text = "90%",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = theme.textPrimary
+          )
+          Spacer(modifier = Modifier.width(6.dp))
+          Text(
+            text = "BATTERY",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 9.sp,
+            color = theme.textSecondary,
+            modifier = Modifier.padding(bottom = 3.dp)
+          )
+        }
+      }
+    }
+
+    // ANC / Transparency Mode Card
+    Box(
+      modifier = Modifier
+        .weight(1f)
+        .height(100.dp)
+        .clip(RoundedCornerShape(20.dp))
+        .background(theme.surface)
+        .border(1.dp, theme.border, RoundedCornerShape(20.dp))
+        .clickable { noiseMode = (noiseMode + 1) % 3 }
+        .padding(14.dp)
+    ) {
+      Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween
+      ) {
+        Text(
+          text = "NOISE CONTROL",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 9.sp,
+          color = theme.textSecondary
+        )
+        Text(
+          text = when (noiseMode) {
+            1 -> "ANC: HIGH"
+            2 -> "TRANSPARENCY"
+            else -> "OFF"
+          },
+          fontFamily = FontFamily.Monospace,
+          fontSize = 13.sp,
+          fontWeight = FontWeight.Bold,
+          color = if (noiseMode == 1) accentColor else theme.textPrimary
+        )
+        Text(
+          text = "TAP TO SWITCH",
+          fontFamily = FontFamily.Monospace,
+          fontSize = 8.sp,
+          color = theme.textSecondary
+        )
+      }
+    }
+  }
+}
+

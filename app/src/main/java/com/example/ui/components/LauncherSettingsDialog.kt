@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -572,45 +573,21 @@ fun LauncherSettingsDialog(
 
         // TAB 0: HOME SCREEN & ICONS
         0 -> {
-          // Icon Pack Style
+          // Icon Pack Style (Screenshot 4: Default, Nothing, Colour)
           Text(
-            text = "ICON PACK STYLE",
+            text = "ICON PACK STYLE (STYLE D'ICÔNE)",
             fontFamily = FontFamily.Monospace,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = NothingGrey,
             letterSpacing = 1.sp
           )
-          Spacer(modifier = Modifier.height(8.dp))
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-          ) {
-            listOf(
-              IconPackStyle.MONOCHROME to "MONO",
-              IconPackStyle.MINIMAL_DARK to "DARK",
-              IconPackStyle.SYSTEM_DEFAULT to "SYSTEM"
-            ).forEach { (pack, label) ->
-              Box(
-                modifier = Modifier
-                  .weight(1f)
-                  .clip(RoundedCornerShape(10.dp))
-                  .background(if (settings.iconPack == pack) accentColor else NothingDarkSurface)
-                  .border(1.dp, if (settings.iconPack == pack) accentColor else NothingBorder, RoundedCornerShape(10.dp))
-                  .clickable { onUpdateSettings(settings.copy(iconPack = pack)) }
-                  .padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center
-              ) {
-                Text(
-                  text = label,
-                  fontFamily = FontFamily.Monospace,
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = NothingWhite
-                )
-              }
-            }
-          }
+          Spacer(modifier = Modifier.height(10.dp))
+          VisualIconPackSwitcher(
+            selectedPack = settings.iconPack,
+            accentColor = accentColor,
+            onSelectPack = { pack -> onUpdateSettings(settings.copy(iconPack = pack)) }
+          )
 
           Spacer(modifier = Modifier.height(18.dp))
 
@@ -730,6 +707,24 @@ fun LauncherSettingsDialog(
               }
             }
           }
+
+          Spacer(modifier = Modifier.height(18.dp))
+
+          // 1.5. ICON PACK SWITCHER (Screenshot 4: Default, Nothing, Colour)
+          Text(
+            text = "ICON PACK STYLE (STYLE D'ICÔNE)",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = NothingGrey,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(10.dp))
+          VisualIconPackSwitcher(
+            selectedPack = settings.iconPack,
+            accentColor = accentColor,
+            onSelectPack = { pack -> onUpdateSettings(settings.copy(iconPack = pack)) }
+          )
 
           Spacer(modifier = Modifier.height(18.dp))
 
@@ -1510,7 +1505,10 @@ private fun NothingWidgetsPortSettingsTab(
       Triple(NosWidgetPortType.CLOCK_MAIN, "NOTHING OS MAIN CLOCK", "Dot Matrix or Minimalist Analog Clock"),
       Triple(NosWidgetPortType.WEATHER_MAIN, "WEATHER & QUICK TOGGLES", "Dynamic Weather + Torch & Sound"),
       Triple(NosWidgetPortType.CASSETTE_PLAYER, "CASSETTE TAPE PLAYER", "Retro Teenage Engineering player"),
-      Triple(NosWidgetPortType.PEDOMETER_GAUGE, "HEALTH & HARDWARE GAUGES", "Step counter & RAM storage monitors")
+      Triple(NosWidgetPortType.PEDOMETER_GAUGE, "HEALTH & HARDWARE GAUGES", "Step counter & RAM storage monitors"),
+      Triple(NosWidgetPortType.GIANT_CIRCLES_CLUSTER, "GIANT CIRCLES CLUSTER", "Giant Camera, Rain Weather & Globe Disc (Screenshot 3)"),
+      Triple(NosWidgetPortType.STICKER_FOCUS_CLUSTER, "STICKER & FOCUS CLUSTER", "Focus rings, Retro Car sticker & Away capsule (Screenshot 5)"),
+      Triple(NosWidgetPortType.NOTHING_X_EARBUDS, "NOTHING X EARBUDS WIDGET", "Earbuds battery 90% & Noise Cancellation (Screenshot 5)")
     )
 
     fun toggleWidget(type: NosWidgetPortType) {
@@ -1787,3 +1785,156 @@ private fun PixelPortItemCard(
     }
   }
 }
+
+/**
+ * Visual Icon Pack Switcher Component matching Screenshot 4:
+ * Displays side-by-side:
+ * - "Default": Concentric circular badge
+ * - "Nothing": Dark circle badge with overlapping square/circle glyph
+ * - "Colour": 12-lobed scalloped flower badge in soft pastel blue
+ */
+@Composable
+fun VisualIconPackSwitcher(
+  selectedPack: IconPackStyle,
+  accentColor: Color,
+  onSelectPack: (IconPackStyle) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  val theme = LocalLauncherTheme.current
+
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(16.dp))
+      .background(theme.surface)
+      .border(1.dp, theme.border, RoundedCornerShape(16.dp))
+      .padding(vertical = 16.dp, horizontal = 8.dp),
+    horizontalArrangement = Arrangement.SpaceEvenly,
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    // 1. Default (System Default)
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier
+        .clip(RoundedCornerShape(12.dp))
+        .clickable { onSelectPack(IconPackStyle.SYSTEM_DEFAULT) }
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+      Box(
+        modifier = Modifier
+          .size(58.dp)
+          .clip(CircleShape)
+          .background(Color(0xFF28303C))
+          .border(
+            width = if (selectedPack == IconPackStyle.SYSTEM_DEFAULT) 3.dp else 1.5.dp,
+            color = if (selectedPack == IconPackStyle.SYSTEM_DEFAULT) Color(0xFF90CAF9) else theme.border,
+            shape = CircleShape
+          )
+          .padding(7.dp)
+          .clip(CircleShape)
+          .background(Color(0xFF5A6E85)),
+        contentAlignment = Alignment.Center
+      ) {
+        Box(
+          modifier = Modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .background(Color(0xFF0F1520))
+        )
+      }
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(
+        text = "Default",
+        fontFamily = FontFamily.Monospace,
+        fontSize = 11.sp,
+        fontWeight = if (selectedPack == IconPackStyle.SYSTEM_DEFAULT) FontWeight.Bold else FontWeight.Normal,
+        color = if (selectedPack == IconPackStyle.SYSTEM_DEFAULT) theme.textPrimary else theme.textSecondary
+      )
+    }
+
+    // 2. Nothing (Monochrome)
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier
+        .clip(RoundedCornerShape(12.dp))
+        .clickable { onSelectPack(IconPackStyle.MONOCHROME) }
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+      Box(
+        modifier = Modifier
+          .size(58.dp)
+          .clip(CircleShape)
+          .background(Color(0xFF121212))
+          .border(
+            width = if (selectedPack == IconPackStyle.MONOCHROME) 3.dp else 1.5.dp,
+            color = if (selectedPack == IconPackStyle.MONOCHROME) NothingWhite else theme.border,
+            shape = CircleShape
+          ),
+        contentAlignment = Alignment.Center
+      ) {
+        // Overlapping circle & square glyph (Screenshot 4)
+        Box(
+          modifier = Modifier
+            .offset(x = (-4).dp, y = (-4).dp)
+            .size(16.dp)
+            .clip(CircleShape)
+            .background(Color.White)
+        )
+        Box(
+          modifier = Modifier
+            .offset(x = 4.dp, y = 4.dp)
+            .size(14.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .border(1.5.dp, Color.White, RoundedCornerShape(3.dp))
+        )
+      }
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(
+        text = "Nothing",
+        fontFamily = FontFamily.Monospace,
+        fontSize = 11.sp,
+        fontWeight = if (selectedPack == IconPackStyle.MONOCHROME) FontWeight.Bold else FontWeight.Normal,
+        color = if (selectedPack == IconPackStyle.MONOCHROME) theme.textPrimary else theme.textSecondary
+      )
+    }
+
+    // 3. Colour (12-lobed Scalloped Flower Badge - Screenshot 4)
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier
+        .clip(RoundedCornerShape(12.dp))
+        .clickable { onSelectPack(IconPackStyle.COLOUR) }
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+      val flowerShape = remember { ScallopedFlowerShape(lobes = 12) }
+      Box(
+        modifier = Modifier
+          .size(58.dp)
+          .clip(flowerShape)
+          .background(Color(0xFFD6E4FF))
+          .border(
+            width = if (selectedPack == IconPackStyle.COLOUR) 3.dp else 1.5.dp,
+            color = if (selectedPack == IconPackStyle.COLOUR) accentColor else Color(0xFFB4C8F5),
+            shape = flowerShape
+          ),
+        contentAlignment = Alignment.Center
+      ) {
+        Box(
+          modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(Color(0xFF1E2D4B).copy(alpha = 0.4f))
+        )
+      }
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(
+        text = "Colour",
+        fontFamily = FontFamily.Monospace,
+        fontSize = 11.sp,
+        fontWeight = if (selectedPack == IconPackStyle.COLOUR) FontWeight.Bold else FontWeight.Normal,
+        color = if (selectedPack == IconPackStyle.COLOUR) theme.textPrimary else theme.textSecondary
+      )
+    }
+  }
+}
+

@@ -27,11 +27,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
@@ -59,11 +67,6 @@ import com.example.model.AppItem
 import com.example.model.IconPackStyle
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBlack
-import com.example.ui.theme.NothingBorder
-import com.example.ui.theme.NothingDarkSurface
-import com.example.ui.theme.NothingElevated
-import com.example.ui.theme.NothingGrey
-import com.example.ui.theme.NothingMatteBlack
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import kotlinx.coroutines.launch
@@ -81,10 +84,15 @@ fun AppDrawerSheet(
   onClose: () -> Unit,
   modifier: Modifier = Modifier,
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
-  accentColor: Color = NothingRed
+  accentColor: Color = NothingRed,
+  onToggleThemeMode: () -> Unit = {},
+  onSelectIconPack: (IconPackStyle) -> Unit = {},
+  onOpenSettings: () -> Unit = {}
 ) {
   val theme = LocalLauncherTheme.current
+  val isDark = theme.isDark
   var selectedAppForMenu by remember { mutableStateOf<AppItem?>(null) }
+  var showOverflowMenu by remember { mutableStateOf(false) }
   val gridState = rememberLazyGridState()
   val scope = rememberCoroutineScope()
 
@@ -96,6 +104,13 @@ fun AppDrawerSheet(
         apps.filter { it.label.contains(searchQuery.trim(), ignoreCase = true) }
       }
     }
+  }
+
+  // Top suggested / recent apps for the upper tray (Screenshot 2)
+  val suggestedApps = remember(apps) {
+    apps.filter {
+      it.label in listOf("Play Store", "Telegram X", "Amazon", "Calendar", "Chrome", "Camera", "Messages", "Nothing X")
+    }.take(4).ifEmpty { apps.take(4) }
   }
 
   // Available Alphabet headers for fast scroll
@@ -119,7 +134,7 @@ fun AppDrawerSheet(
         .navigationBarsPadding()
         .padding(top = 10.dp, start = 16.dp, end = 16.dp)
     ) {
-      // Top Bar: Back button + Search Box + Dot Indicator
+      // Top Bar: Back button + Search Box + 3-Dot Overflow Menu (Screenshot 1 & 2)
       Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +151,7 @@ fun AppDrawerSheet(
           )
         }
 
-        // Nothing OS Dot-Matrix Style Search Input
+        // Nothing OS Search Pill (Matches Screenshot 1 in Dark & Screenshot 2 in Light)
         Row(
           modifier = Modifier
             .weight(1f)
@@ -177,7 +192,9 @@ fun AppDrawerSheet(
               ),
               cursorBrush = SolidColor(accentColor),
               singleLine = true,
-              modifier = Modifier.fillMaxWidth().testTag("app_search_input")
+              modifier = Modifier
+                .fillMaxWidth()
+                .testTag("app_search_input")
             )
           }
 
@@ -195,9 +212,193 @@ fun AppDrawerSheet(
             }
           }
         }
+
+        // 3-Dots Overflow Menu (Matches Screenshot 1 & 2 top-right)
+        Box {
+          IconButton(
+            onClick = { showOverflowMenu = true },
+            modifier = Modifier.testTag("drawer_overflow_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.MoreVert,
+              contentDescription = "More Options",
+              tint = theme.textPrimary
+            )
+          }
+
+          DropdownMenu(
+            expanded = showOverflowMenu,
+            onDismissRequest = { showOverflowMenu = false },
+            modifier = Modifier
+              .background(theme.surface)
+              .border(1.dp, theme.border, RoundedCornerShape(8.dp))
+          ) {
+            // Theme Jour / Nuit Toggle
+            DropdownMenuItem(
+              text = {
+                Text(
+                  text = if (isDark) "SWITCH TO THEME JOUR (LIGHT)" else "SWITCH TO THEME NUIT (DARK)",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = theme.textPrimary
+                )
+              },
+              leadingIcon = {
+                Icon(
+                  imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                  contentDescription = null,
+                  tint = accentColor,
+                  modifier = Modifier.size(18.dp)
+                )
+              },
+              onClick = {
+                showOverflowMenu = false
+                onToggleThemeMode()
+              }
+            )
+
+            // Icon Pack: Nothing Monochrome
+            DropdownMenuItem(
+              text = {
+                Text(
+                  text = "ICON PACK: NOTHING (MONO)",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  color = if (iconPack == IconPackStyle.MONOCHROME) accentColor else theme.textPrimary
+                )
+              },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Default.Palette,
+                  contentDescription = null,
+                  tint = if (iconPack == IconPackStyle.MONOCHROME) accentColor else theme.textSecondary,
+                  modifier = Modifier.size(18.dp)
+                )
+              },
+              onClick = {
+                showOverflowMenu = false
+                onSelectIconPack(IconPackStyle.MONOCHROME)
+              }
+            )
+
+            // Icon Pack: Colour (Scalloped)
+            DropdownMenuItem(
+              text = {
+                Text(
+                  text = "ICON PACK: COLOUR (SCALLOPED)",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  color = if (iconPack == IconPackStyle.COLOUR) accentColor else theme.textPrimary
+                )
+              },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Default.Palette,
+                  contentDescription = null,
+                  tint = if (iconPack == IconPackStyle.COLOUR) accentColor else theme.textSecondary,
+                  modifier = Modifier.size(18.dp)
+                )
+              },
+              onClick = {
+                showOverflowMenu = false
+                onSelectIconPack(IconPackStyle.COLOUR)
+              }
+            )
+
+            // Icon Pack: Default (System)
+            DropdownMenuItem(
+              text = {
+                Text(
+                  text = "ICON PACK: DEFAULT (SYSTEM)",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  color = if (iconPack == IconPackStyle.SYSTEM_DEFAULT) accentColor else theme.textPrimary
+                )
+              },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Default.Palette,
+                  contentDescription = null,
+                  tint = if (iconPack == IconPackStyle.SYSTEM_DEFAULT) accentColor else theme.textSecondary,
+                  modifier = Modifier.size(18.dp)
+                )
+              },
+              onClick = {
+                showOverflowMenu = false
+                onSelectIconPack(IconPackStyle.SYSTEM_DEFAULT)
+              }
+            )
+
+            // Settings
+            DropdownMenuItem(
+              text = {
+                Text(
+                  text = "LAUNCHER SETTINGS",
+                  fontFamily = FontFamily.Monospace,
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = theme.textPrimary
+                )
+              },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Default.Settings,
+                  contentDescription = null,
+                  tint = accentColor,
+                  modifier = Modifier.size(18.dp)
+                )
+              },
+              onClick = {
+                showOverflowMenu = false
+                onOpenSettings()
+              }
+            )
+          }
+        }
       }
 
-      Spacer(modifier = Modifier.height(16.dp))
+      Spacer(modifier = Modifier.height(14.dp))
+
+      // Upper Tray: Recents/Favorites row separated by a subtle divider (Screenshot 2)
+      if (searchQuery.isEmpty() && suggestedApps.isNotEmpty()) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+          horizontalArrangement = Arrangement.SpaceAround,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          suggestedApps.forEach { app ->
+            AppIconItem(
+              app = app,
+              onClick = { onAppClick(app) },
+              onLongClick = { selectedAppForMenu = app },
+              iconSize = 52.dp,
+              showLabel = true,
+              iconPack = iconPack,
+              accentColor = accentColor,
+              modifier = Modifier.weight(1f)
+            )
+          }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Subtle divider separating recents from the alphabetized app list (Screenshot 2)
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.Center
+        ) {
+          HorizontalDivider(
+            modifier = Modifier.width(60.dp),
+            thickness = 2.dp,
+            color = theme.border.copy(alpha = 0.5f)
+          )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+      }
 
       // Drawer Content: Grid + Fast-Scroll Alphabet Sidebar
       Row(modifier = Modifier.fillMaxSize()) {
@@ -405,4 +606,3 @@ private fun MenuRow(
     )
   }
 }
-

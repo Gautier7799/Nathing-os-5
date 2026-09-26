@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -63,7 +61,6 @@ fun NothingDock(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .shadow(10.dp, RoundedCornerShape(32.dp), clip = false)
         .clip(RoundedCornerShape(32.dp))
         .background(theme.dockBg.copy(alpha = if (theme.isDark) 0.72f else 0.62f))
         .border(1.dp, theme.border.copy(alpha = 0.72f), RoundedCornerShape(32.dp))
@@ -83,24 +80,6 @@ fun NothingDock(
         )
       }
 
-      // 5th Item: Signature Nothing App Drawer Icon (9 dots in circle)
-      Box(
-        modifier = Modifier
-          .size(48.dp)
-          .clip(CircleShape)
-          .background(theme.dockButtonBg)
-          .border(1.dp, theme.border, CircleShape)
-          .clickable { onOpenDrawer() }
-          .testTag("app_drawer_dock_button"),
-        contentAlignment = Alignment.Center
-      ) {
-        Icon(
-          imageVector = Icons.Default.Apps,
-          contentDescription = "App Drawer",
-          tint = if (theme.isDark) accentColor else Color(0xFF1A1A1A),
-          modifier = Modifier.size(24.dp)
-        )
-      }
     }
 
     if (showSearchBar) {

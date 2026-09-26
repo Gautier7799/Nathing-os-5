@@ -57,6 +57,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.awaitEachGesture
+import androidx.compose.ui.input.pointer.awaitFirstDown
+import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -125,6 +131,30 @@ fun AppDrawerSheet(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
+      // Swipe down anywhere in the drawer returns to Home; child scrolling is not consumed.
+      .pointerInput(Unit) {
+        awaitEachGesture {
+          val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
+          )
+          var lastY = down.position.y
+          var finished = false
+          while (!finished) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull()
+            if (change == null) {
+              finished = true
+            } else {
+              lastY = change.position.y
+              if (change.changedToUp()) {
+                if (lastY - down.position.y > 80f) onClose()
+                finished = true
+              }
+            }
+          }
+        }
+      }
       .testTag("app_drawer_container")
   ) {
     Column(

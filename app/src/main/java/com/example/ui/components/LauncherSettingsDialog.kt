@@ -1797,25 +1797,6 @@ private fun PixelPortItemCard(
         }
       }
 
-      Spacer(modifier = Modifier.width(8.dp))
-
-      Button(
-        onClick = onLaunch,
-        colors = ButtonDefaults.buttonColors(
-          containerColor = accentColor,
-          contentColor = if (accentColor == Color.White) Color.Black else Color.White
-        ),
-        shape = RoundedCornerShape(8.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-        modifier = Modifier.height(34.dp)
-      ) {
-        Text(
-          text = "TEST",
-          fontFamily = FontFamily.Monospace,
-          fontSize = 10.sp,
-          fontWeight = FontWeight.Bold
-        )
-      }
     }
   }
 }

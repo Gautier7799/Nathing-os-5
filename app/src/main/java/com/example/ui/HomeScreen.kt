@@ -62,6 +62,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.awaitEachGesture
+import androidx.compose.ui.input.pointer.awaitFirstDown
+import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.snapshotFlow
@@ -152,6 +157,8 @@ fun HomeScreen(
   onRemovePinnedApp: (AppItem) -> Unit = {},
   onToggleDockApp: (AppItem) -> Unit = {},
   onToggleWidget: (NosWidgetPortType) -> Unit = {},
+  onOpenAppInfo: (AppItem) -> Unit = {},
+  onSwipeUp: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val theme = LocalLauncherTheme.current
@@ -188,6 +195,33 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
+      // Global gesture layer: observe swipes before child scroll containers without
+      // consuming them, so the entire launcher surface can open the app drawer.
+      .pointerInput(Unit) {
+        awaitEachGesture {
+          val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
+          )
+          var lastY = down.position.y
+          var finished = false
+          while (!finished) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull()
+            if (change == null) {
+              finished = true
+            } else {
+              lastY = change.position.y
+              if (change.changedToUp()) {
+                if (lastY - down.position.y < -80f) {
+                  onSwipeUp()
+                }
+                finished = true
+              }
+            }
+          }
+        }
+      }
       .testTag("home_screen_container")
   ) {
     // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)
@@ -741,6 +775,22 @@ fun HomeScreen(
                                 .size(24.dp)
                                 .clip(CircleShape)
                                 .background(NothingElevated)
+                                .clickable { onOpenAppInfo(app) },
+                              contentAlignment = Alignment.Center
+                            ) {
+                              Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "App info",
+                                tint = NothingWhite,
+                                modifier = Modifier.size(13.dp)
+                              )
+                            }
+
+                            Box(
+                              modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(NothingElevated)
                                 .clickable { onRemovePinnedApp(app) },
                               contentAlignment = Alignment.Center
                             ) {
@@ -767,46 +817,6 @@ fun HomeScreen(
             }
           }
         }
-
-        // Customize NOS Widgets Port Button
-        item {
-          Button(
-            onClick = { showWidgetSheet = true },
-            colors = ButtonDefaults.buttonColors(
-              containerColor = theme.surface,
-              contentColor = theme.textPrimary
-            ),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-              .fillMaxWidth()
-              .height(46.dp)
-              .border(1.dp, theme.border, RoundedCornerShape(14.dp))
-          ) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-              Icon(
-                imageVector = Icons.Default.Widgets,
-                contentDescription = null,
-                tint = accentColor,
-                modifier = Modifier.size(16.dp)
-              )
-              Text(
-                text = "+ CUSTOMIZE NOS 3.5 WIDGETS",
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-              )
-            }
-          }
-        }
-
-        item {
-          Spacer(modifier = Modifier.height(10.dp))
-        }
-      }
 
       // Bottom Persistent Nothing Dock & Search
       NothingDock(

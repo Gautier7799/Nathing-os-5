@@ -824,6 +824,7 @@ fun HomeScreen(
         onAppClick = onAppClick,
         onOpenDrawer = onOpenDrawer,
         onOpenSearch = onOpenDrawer,
+        onOpenAppInfo = onOpenAppInfo,
         iconPack = settings.iconPack,
         accentColor = accentColor,
         showSearchBar = settings.showSearchBarOnDock

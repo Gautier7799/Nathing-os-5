@@ -1,6 +1,5 @@
 package com.example
 
-import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -52,8 +51,10 @@ class MainActivity : ComponentActivity() {
   private val keyguardReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       if (intent?.action == Intent.ACTION_USER_PRESENT) {
-        if (viewModel.settings.value.lockScreen.preventSystemLockOverlap) {
-          viewModel.unlockLauncherScreen()
+        if (viewModel.settings.value.lockScreen.isLockScreenEnabled) {
+          // The system keyguard has just been dismissed; keep the launcher's
+          // lock surface visible until the user explicitly unlocks it.
+          viewModel.lockLauncherScreen()
         }
       }
     }
@@ -87,12 +88,9 @@ class MainActivity : ComponentActivity() {
 
   override fun onResume() {
     super.onResume()
-    val km = getSystemService(KeyguardManager::class.java)
-    if (km != null && !km.isKeyguardLocked && viewModel.settings.value.lockScreen.preventSystemLockOverlap) {
-      if (viewModel.currentScreen.value == LauncherScreen.LOCK_SCREEN) {
-        viewModel.unlockLauncherScreen()
-      }
-    }
+    // Do not auto-dismiss the custom lock screen here. onResume also runs when
+    // returning from another app; dismissing it here made the lock screen look
+    // inactive even when its required permissions were already granted.
   }
 
   override fun onDestroy() {
@@ -137,9 +135,7 @@ fun NothingLauncherApp(
   // Handle hardware back press gracefully
   BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER || currentScreen == LauncherScreen.LOCK_SCREEN || isSettingsOpen || activeFolder != null) {
     if (currentScreen == LauncherScreen.LOCK_SCREEN) {
-      if (settings.lockScreen.securityType == com.example.model.LockSecurityType.SWIPE) {
-        viewModel.unlockLauncherScreen()
-      }
+      // Back never bypasses the custom lock screen.
     } else if (activeFolder != null) {
       viewModel.openFolder(null)
     } else if (isSettingsOpen) {

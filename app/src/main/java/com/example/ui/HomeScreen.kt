@@ -1,5 +1,10 @@
 package com.example.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -23,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +64,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +72,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.example.model.AppItem
 import com.example.model.AudioState
 import com.example.model.FitnessStats
@@ -152,6 +162,27 @@ fun HomeScreen(
 
   var isReorderingFavorites by remember { mutableStateOf(false) }
   var showWidgetSheet by remember { mutableStateOf(false) }
+  val homeListState = rememberLazyListState()
+  var topBarVisible by remember { mutableStateOf(true) }
+
+  // Hide the top controls while moving down through the widgets and restore them
+  // immediately when the user scrolls upward or returns to the top.
+  LaunchedEffect(homeListState) {
+    var previousPosition = 0
+    snapshotFlow {
+      homeListState.firstVisibleItemIndex * 100000 + homeListState.firstVisibleItemScrollOffset
+    }.distinctUntilChanged().collectLatest { position ->
+      if (position <= 8) {
+        topBarVisible = true
+      } else if (position > previousPosition) {
+        topBarVisible = false
+      } else if (position < previousPosition) {
+        topBarVisible = true
+      }
+      previousPosition = position
+    }
+  }
+
 
   Box(
     modifier = modifier
@@ -174,103 +205,110 @@ fun HomeScreen(
         .navigationBarsPadding()
     ) {
       // Top Navigation / Glance Bar (With Swipe down for notifications)
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 16.dp, vertical = 12.dp)
-          .pointerInput(settings.swipeDownNotifications) {
-            if (settings.swipeDownNotifications) {
-              detectVerticalDragGestures { _, dragAmount ->
-                if (dragAmount > 30f) {
-                  onSwipeDown()
+      AnimatedVisibility(
+        visible = topBarVisible,
+        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+      ) {
+              Row(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(horizontal = 16.dp, vertical = 12.dp)
+                  .pointerInput(settings.swipeDownNotifications) {
+                    if (settings.swipeDownNotifications) {
+                      detectVerticalDragGestures { _, dragAmount ->
+                        if (dragAmount > 30f) {
+                          onSwipeDown()
+                        }
+                      }
+                    }
+                  },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                  Box(
+                    modifier = Modifier
+                      .size(8.dp)
+                      .clip(CircleShape)
+                      .background(accentColor)
+                  )
+                  Text(
+                    text = "NOTHING",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = theme.textPrimary,
+                    letterSpacing = 2.sp
+                  )
+                }
+        
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                  // Quick Day / Night Theme Toggle (Direct 1-tap switch between Image 3 Theme Jour and Image 2 Theme Nuit)
+                  IconButton(
+                    onClick = onToggleThemeMode,
+                    modifier = Modifier.testTag("home_theme_toggle_button")
+                  ) {
+                    Icon(
+                      imageVector = when (settings.themeMode) {
+                        LauncherThemeMode.DARK -> Icons.Default.DarkMode
+                        LauncherThemeMode.LIGHT -> Icons.Default.LightMode
+                        LauncherThemeMode.RETRO_PASTEL -> Icons.Default.Palette
+                        LauncherThemeMode.SYSTEM -> if (theme.isDark) Icons.Default.DarkMode else Icons.Default.LightMode
+                      },
+                      contentDescription = "Toggle Theme Jour / Nuit / Retro",
+                      tint = if (settings.themeMode != LauncherThemeMode.DARK) accentColor else theme.textSecondary,
+                      modifier = Modifier.size(20.dp)
+                    )
+                  }
+        
+                  IconButton(
+                    onClick = onDoubleTap,
+                    modifier = Modifier.testTag("home_lock_button")
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.Lock,
+                      contentDescription = "Lock Screen",
+                      tint = theme.textSecondary,
+                      modifier = Modifier.size(20.dp)
+                    )
+                  }
+        
+                  IconButton(
+                    onClick = { showWidgetSheet = true },
+                    modifier = Modifier.testTag("home_widgets_port_button")
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.Widgets,
+                      contentDescription = "NOS 3.5 Widgets Port",
+                      tint = accentColor,
+                      modifier = Modifier.size(20.dp)
+                    )
+                  }
+        
+                  IconButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.testTag("home_settings_button")
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.Settings,
+                      contentDescription = "Launcher Settings",
+                      tint = theme.textSecondary
+                    )
+                  }
                 }
               }
-            }
-          },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          Box(
-            modifier = Modifier
-              .size(8.dp)
-              .clip(CircleShape)
-              .background(accentColor)
-          )
-          Text(
-            text = "NOTHING",
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
-            color = theme.textPrimary,
-            letterSpacing = 2.sp
-          )
-        }
-
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-          // Quick Day / Night Theme Toggle (Direct 1-tap switch between Image 3 Theme Jour and Image 2 Theme Nuit)
-          IconButton(
-            onClick = onToggleThemeMode,
-            modifier = Modifier.testTag("home_theme_toggle_button")
-          ) {
-            Icon(
-              imageVector = when (settings.themeMode) {
-                LauncherThemeMode.DARK -> Icons.Default.DarkMode
-                LauncherThemeMode.LIGHT -> Icons.Default.LightMode
-                LauncherThemeMode.RETRO_PASTEL -> Icons.Default.Palette
-                LauncherThemeMode.SYSTEM -> if (theme.isDark) Icons.Default.DarkMode else Icons.Default.LightMode
-              },
-              contentDescription = "Toggle Theme Jour / Nuit / Retro",
-              tint = if (settings.themeMode != LauncherThemeMode.DARK) accentColor else theme.textSecondary,
-              modifier = Modifier.size(20.dp)
-            )
-          }
-
-          IconButton(
-            onClick = onDoubleTap,
-            modifier = Modifier.testTag("home_lock_button")
-          ) {
-            Icon(
-              imageVector = Icons.Default.Lock,
-              contentDescription = "Lock Screen",
-              tint = theme.textSecondary,
-              modifier = Modifier.size(20.dp)
-            )
-          }
-
-          IconButton(
-            onClick = { showWidgetSheet = true },
-            modifier = Modifier.testTag("home_widgets_port_button")
-          ) {
-            Icon(
-              imageVector = Icons.Default.Widgets,
-              contentDescription = "NOS 3.5 Widgets Port",
-              tint = accentColor,
-              modifier = Modifier.size(20.dp)
-            )
-          }
-
-          IconButton(
-            onClick = onOpenSettings,
-            modifier = Modifier.testTag("home_settings_button")
-          ) {
-            Icon(
-              imageVector = Icons.Default.Settings,
-              contentDescription = "Launcher Settings",
-              tint = theme.textSecondary
-            )
-          }
-        }
       }
 
       // Scrollable Home Screen Body (Widgets, Folders, Pinned Apps)
       LazyColumn(
+        state = homeListState,
         modifier = Modifier
           .weight(1f)
           .fillMaxWidth()

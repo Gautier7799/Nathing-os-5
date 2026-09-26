@@ -174,6 +174,13 @@ fun NothingLauncherApp(
       onEditNote = { isEditingNote = true },
       onOpenDrawer = { viewModel.setScreen(LauncherScreen.APP_DRAWER) },
       onOpenSettings = { isSettingsOpen = true },
+      onOpenAppInfo = { app -> viewModel.openAppInfo(app) },
+      onSwipeUp = {
+        if (currentScreen == LauncherScreen.HOME) {
+          viewModel.setSearchQuery("")
+          viewModel.setScreen(LauncherScreen.APP_DRAWER)
+        }
+      },
       onSwipeDown = { viewModel.openNotificationsPanel() },
       onDoubleTap = { viewModel.lockScreen() },
       onToggleThemeMode = {

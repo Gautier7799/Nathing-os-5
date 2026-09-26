@@ -38,9 +38,10 @@ jobs:
       - name: Prepare Gradle Wrapper
         run: |
           if [ ! -f "./gradlew" ]; then
-            gradle wrapper --gradle-version 9.3.1
+            echo "gradlew is not committed; using the provisioned Gradle installation."
+          else
+            chmod +x ./gradlew
           fi
-          chmod +x ./gradlew || true
 
       - name: Prepare Debug Keystore
         run: |

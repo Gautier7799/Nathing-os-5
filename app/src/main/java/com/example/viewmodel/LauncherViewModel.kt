@@ -296,6 +296,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
       }
       current.copy(activeWidgets = currentList)
     }
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      LauncherSettingsStore.save(context, _settings.value)
+    }
   }
 
   fun setCustomWallpaper(uri: android.net.Uri, target: com.example.model.WallpaperTarget) {
@@ -332,6 +335,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
               }
             }
           }
+          viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            LauncherSettingsStore.save(context, _settings.value)
+          }
           android.widget.Toast.makeText(context, "Nothing OS: Wallpaper set successfully", android.widget.Toast.LENGTH_SHORT).show()
         }
       } catch (e: Exception) {
@@ -360,6 +366,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
           customLockScreenWallpaperUri = null
         )
       }
+    }
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      LauncherSettingsStore.save(context, _settings.value)
     }
     android.widget.Toast.makeText(context, "Photo removed. Default Nothing OS wallpaper restored.", android.widget.Toast.LENGTH_SHORT).show()
   }

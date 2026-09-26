@@ -26,6 +26,7 @@ import com.example.model.LauncherSettings
 import com.example.model.NosWidgetPortType
 import com.example.model.QuickToggleState
 import com.example.model.WeatherInfo
+import com.example.service.LauncherSettingsStore
 import com.example.service.SystemLocationHelper
 import com.example.service.SystemPortHelper
 import kotlinx.coroutines.delay
@@ -42,9 +43,13 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
   private val context: Context get() = getApplication<Application>().applicationContext
 
+  // Restore preferences before selecting the first screen so lock-screen and
+  // widget choices survive process death/reboots.
+  private val initialSettings = LauncherSettingsStore.load(context)
+
   // Screen navigation - Starts with Nothing OS 5 Lock Screen when enabled
   private val _currentScreen = MutableStateFlow(
-    if (LauncherSettings().lockScreen.isLockScreenEnabled) LauncherScreen.LOCK_SCREEN else LauncherScreen.HOME
+    if (initialSettings.lockScreen.isLockScreenEnabled) LauncherScreen.LOCK_SCREEN else LauncherScreen.HOME
   )
   val currentScreen: StateFlow<LauncherScreen> = _currentScreen.asStateFlow()
 
@@ -135,7 +140,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
   val notifications: StateFlow<List<com.example.model.LockNotificationItem>> = _notifications.asStateFlow()
 
   // Settings
-  private val _settings = MutableStateFlow(LauncherSettings())
+  private val _settings = MutableStateFlow(initialSettings)
   val settings: StateFlow<LauncherSettings> = _settings.asStateFlow()
 
   // Active folder dialog
@@ -276,6 +281,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
   fun updateSettings(newSettings: LauncherSettings) {
     _settings.value = newSettings
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      LauncherSettingsStore.save(context, newSettings)
+    }
   }
 
   fun toggleWidgetActive(widgetType: NosWidgetPortType) {

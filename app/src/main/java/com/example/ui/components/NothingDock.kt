@@ -45,6 +45,7 @@ fun NothingDock(
   onAppClick: (AppItem) -> Unit,
   onOpenDrawer: () -> Unit,
   onOpenSearch: () -> Unit,
+  onOpenAppInfo: (AppItem) -> Unit = {},
   modifier: Modifier = Modifier,
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   accentColor: Color = NothingRed,
@@ -74,6 +75,7 @@ fun NothingDock(
         AppIconItem(
           app = app,
           onClick = { onAppClick(app) },
+          onLongClick = { onOpenAppInfo(app) },
           iconSize = 48.dp,
           showLabel = false,
           iconPack = iconPack,

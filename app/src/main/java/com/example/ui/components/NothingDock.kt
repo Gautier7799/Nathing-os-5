@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,9 +63,10 @@ fun NothingDock(
     Row(
       modifier = Modifier
         .fillMaxWidth()
+        .shadow(10.dp, RoundedCornerShape(32.dp), clip = false)
         .clip(RoundedCornerShape(32.dp))
-        .background(theme.dockBg)
-        .border(1.dp, theme.border, RoundedCornerShape(32.dp))
+        .background(theme.dockBg.copy(alpha = if (theme.isDark) 0.72f else 0.62f))
+        .border(1.dp, theme.border.copy(alpha = 0.72f), RoundedCornerShape(32.dp))
         .padding(horizontal = 12.dp, vertical = 8.dp),
       horizontalArrangement = Arrangement.SpaceEvenly,
       verticalAlignment = Alignment.CenterVertically
@@ -109,9 +111,10 @@ fun NothingDock(
         modifier = Modifier
           .fillMaxWidth()
           .height(44.dp)
+          .shadow(8.dp, RoundedCornerShape(22.dp), clip = false)
           .clip(RoundedCornerShape(22.dp))
-          .background(theme.searchPillBg)
-          .border(1.dp, theme.border, RoundedCornerShape(22.dp))
+          .background(theme.searchPillBg.copy(alpha = if (theme.isDark) 0.76f else 0.68f))
+          .border(1.dp, theme.border.copy(alpha = 0.72f), RoundedCornerShape(22.dp))
           .clickable { onOpenSearch() }
           .padding(horizontal = 16.dp)
           .testTag("nothing_search_pill"),

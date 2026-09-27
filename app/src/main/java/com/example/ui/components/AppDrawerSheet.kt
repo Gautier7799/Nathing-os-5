@@ -38,13 +38,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -60,11 +57,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -73,11 +67,10 @@ import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
 import com.example.model.IconPackStyle
 import com.example.ui.theme.LocalLauncherTheme
-import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingRed
-import com.example.ui.theme.NothingWhite
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.abs
 
 @Composable
 fun AppDrawerSheet(
@@ -98,7 +91,6 @@ fun AppDrawerSheet(
 ) {
   val theme = LocalLauncherTheme.current
   val isDark = theme.isDark
-  var selectedAppForMenu by remember { mutableStateOf<AppItem?>(null) }
   var showOverflowMenu by remember { mutableStateOf(false) }
   val gridState = rememberLazyGridState()
   val scope = rememberCoroutineScope()
@@ -132,27 +124,29 @@ fun AppDrawerSheet(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background.copy(alpha = 0.84f))
-      // Swipe down anywhere in the drawer returns to Home; child scrolling is not consumed.
+      // Stable drawer close gesture: top-edge only, so grid scrolling cannot close the drawer.
       .pointerInput(Unit) {
         awaitEachGesture {
           val down = awaitFirstDown(
             requireUnconsumed = false,
             pass = PointerEventPass.Initial
           )
-          var lastY = down.position.y
-          var finished = false
-          while (!finished) {
+          val startedAtTopEdge = down.position.y <= size.height * 0.18f
+          var triggered = false
+
+          while (true) {
             val event = awaitPointerEvent(PointerEventPass.Initial)
-            val change = event.changes.firstOrNull()
-            if (change == null) {
-              finished = true
-            } else {
-              lastY = change.position.y
-              if (change.changedToUp()) {
-                if (lastY - down.position.y > 140f) onClose()
-                finished = true
-              }
+            val change = event.changes.firstOrNull() ?: break
+            val dx = change.position.x - down.position.x
+            val dy = change.position.y - down.position.y
+
+            if (!triggered && startedAtTopEdge && dy > 220f && abs(dy) > abs(dx) * 1.25f) {
+              change.consume()
+              triggered = true
+              onClose()
             }
+
+            if (event.changes.all { !it.pressed }) break
           }
         }
       }
@@ -404,7 +398,7 @@ fun AppDrawerSheet(
             AppIconItem(
               app = app,
               onClick = { onAppClick(app) },
-              onLongClick = { selectedAppForMenu = app },
+              onLongClick = { onOpenAppInfo(app) },
               iconSize = 52.dp,
               showLabel = true,
               iconPack = iconPack,
@@ -447,7 +441,7 @@ fun AppDrawerSheet(
             AppIconItem(
               app = app,
               onClick = { onAppClick(app) },
-              onLongClick = { selectedAppForMenu = app },
+              onLongClick = { onOpenAppInfo(app) },
               iconSize = 56.dp,
               showLabel = true,
               iconPack = iconPack,
@@ -489,156 +483,5 @@ fun AppDrawerSheet(
       }
     }
 
-    // App Long-Press Action Sheet
-    selectedAppForMenu?.let { app ->
-      AppContextMenuSheet(
-        app = app,
-        onDismiss = { selectedAppForMenu = null },
-        onLaunch = {
-          onAppClick(app)
-          selectedAppForMenu = null
-        },
-        onTogglePin = {
-          onTogglePin(app)
-          selectedAppForMenu = null
-        },
-        onToggleDock = {
-          onToggleDock(app)
-          selectedAppForMenu = null
-        },
-        onAppInfo = {
-          onOpenAppInfo(app)
-          selectedAppForMenu = null
-        },
-        accentColor = accentColor
-      )
-    }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AppContextMenuSheet(
-  app: AppItem,
-  onDismiss: () -> Unit,
-  onLaunch: () -> Unit,
-  onTogglePin: () -> Unit,
-  onToggleDock: () -> Unit,
-  onAppInfo: () -> Unit,
-  accentColor: Color
-) {
-  val theme = LocalLauncherTheme.current
-  val haptic = LocalHapticFeedback.current
-  val sheetState = rememberModalBottomSheetState()
-
-  ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    sheetState = sheetState,
-    containerColor = theme.surface,
-    contentColor = theme.textPrimary
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = 12.dp)
-        .testTag("app_context_menu")
-    ) {
-      // Header with App name
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        Box(
-          modifier = Modifier
-            .size(10.dp)
-            .clip(CircleShape)
-            .background(accentColor)
-        )
-        Text(
-          text = app.label.uppercase(Locale.ROOT),
-          fontFamily = FontFamily.Monospace,
-          fontSize = 18.sp,
-          fontWeight = FontWeight.Bold,
-          color = theme.textPrimary
-        )
-      }
-
-      Spacer(modifier = Modifier.height(16.dp))
-
-      // Action 1: Open
-      MenuRow(
-        title = "OPEN APP",
-        icon = Icons.AutoMirrored.Filled.OpenInNew,
-        accentColor = accentColor,
-        textColor = theme.textPrimary,
-        onClick = onLaunch
-      )
-
-      // Action 2: Pin / Unpin Home
-      MenuRow(
-        title = if (app.isPinned) "REMOVE FROM HOME" else "PIN TO HOME SCREEN",
-        icon = Icons.Default.PushPin,
-        accentColor = accentColor,
-        textColor = theme.textPrimary,
-        onClick = onTogglePin
-      )
-
-      // Action 3: Add to Dock
-      MenuRow(
-        title = if (app.isDock) "REMOVE FROM DOCK" else "ADD TO DOCK FAVORITES",
-        icon = Icons.Default.Star,
-        accentColor = accentColor,
-        textColor = theme.textPrimary,
-        onClick = onToggleDock
-      )
-
-      // Action 4: App Info
-      MenuRow(
-        title = "APP INFO & PERMISSIONS",
-        icon = Icons.Default.Info,
-        accentColor = accentColor,
-        textColor = theme.textPrimary,
-        onClick = onAppInfo
-      )
-
-      Spacer(modifier = Modifier.height(24.dp))
-    }
-  }
-}
-
-@Composable
-private fun MenuRow(
-  title: String,
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
-  accentColor: Color,
-  textColor: Color = NothingWhite,
-  onClick: () -> Unit
-) {
-  val haptic = LocalHapticFeedback.current
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp))
-      .clickable {
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        onClick()
-      }
-      .padding(vertical = 12.dp, horizontal = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(16.dp)
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = title,
-      tint = accentColor,
-      modifier = Modifier.size(20.dp)
-    )
-    Text(
-      text = title,
-      fontFamily = FontFamily.Monospace,
-      fontSize = 13.sp,
-      fontWeight = FontWeight.Medium,
-      color = textColor
-    )
   }
 }

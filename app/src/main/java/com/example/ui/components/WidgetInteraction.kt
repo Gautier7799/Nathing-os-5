@@ -2,7 +2,6 @@ package com.example.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -35,6 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -44,6 +47,7 @@ import com.example.model.NosWidgetPortType
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingRed
 import kotlin.math.abs
+import kotlin.math.hypot
 
 private const val MIN_WIDGET_SCALE = 0.75f
 private const val MAX_WIDGET_SCALE = 1.5f
@@ -71,13 +75,59 @@ fun ScalableWidget(
     modifier = Modifier
       .fillMaxWidth()
       .pointerInput(widgetType) {
-        detectTransformGestures { _, _, zoom, _ ->
-          if (abs(zoom - 1f) > 0.001f) {
-            val next = (gestureScale * zoom).coerceIn(MIN_WIDGET_SCALE, MAX_WIDGET_SCALE)
-            if (next != gestureScale) {
-              gestureScale = next
-              onScaleChange(next)
-              haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        // Stability rule: one finger belongs to the Home LazyColumn.
+        // Only a real two-finger gesture is allowed to resize this widget.
+        awaitEachGesture {
+          awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+          var resizing = false
+          var changed = false
+          var lastHapticScale = gestureScale
+
+          while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val pressedCount = event.changes.count { it.pressed }
+
+            if (pressedCount >= 2) {
+              resizing = true
+              val pointers = event.changes.filter { it.pressed }.take(2)
+              val zoom = if (pointers.size == 2) {
+                val currentDistance = hypot(
+                  pointers[0].position.x - pointers[1].position.x,
+                  pointers[0].position.y - pointers[1].position.y
+                )
+                val previousDistance = hypot(
+                  pointers[0].previousPosition.x - pointers[1].previousPosition.x,
+                  pointers[0].previousPosition.y - pointers[1].previousPosition.y
+                )
+                if (previousDistance > 0.5f) currentDistance / previousDistance else 1f
+              } else {
+                1f
+              }
+              if (abs(zoom - 1f) > 0.008f) {
+                val next = (gestureScale * zoom).coerceIn(MIN_WIDGET_SCALE, MAX_WIDGET_SCALE)
+                if (abs(next - gestureScale) > 0.001f) {
+                  gestureScale = next
+                  changed = true
+                  if (abs(gestureScale - lastHapticScale) >= 0.05f) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    lastHapticScale = gestureScale
+                  }
+                }
+              }
+              event.changes.forEach { it.consume() }
+            } else if (resizing) {
+              if (changed) {
+                // Persist once at the end, not on every gesture frame.
+                onScaleChange(gestureScale.coerceIn(MIN_WIDGET_SCALE, MAX_WIDGET_SCALE))
+              }
+              break
+            }
+
+            if (event.changes.all { !it.pressed }) {
+              if (resizing && changed) {
+                onScaleChange(gestureScale.coerceIn(MIN_WIDGET_SCALE, MAX_WIDGET_SCALE))
+              }
+              break
             }
           }
         }
@@ -100,14 +150,15 @@ fun ScalableWidget(
           haptic.performHapticFeedback(HapticFeedbackType.LongPress)
           showActions = true
         }
-        .padding(horizontal = 8.dp, vertical = 3.dp),
+        .padding(horizontal = 7.dp, vertical = 2.dp),
       horizontalArrangement = Arrangement.spacedBy(5.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      Text(
-        text = if (abs(gestureScale - 1f) > 0.01f) "WIDGET ${"%.0f".format(gestureScale * 100)}%" else "WIDGET •••",
-        color = accentColor,
-        fontSize = 8.sp
+      Icon(
+        imageVector = Icons.Default.MoreHoriz,
+        contentDescription = "Widget options",
+        tint = accentColor,
+        modifier = Modifier.size(16.dp)
       )
     }
   }
@@ -119,11 +170,15 @@ fun ScalableWidget(
       accentColor = accentColor,
       onDismiss = { showActions = false },
       onZoomIn = {
-        onScaleChange((gestureScale + 0.10f).coerceAtMost(MAX_WIDGET_SCALE))
+        val next = (gestureScale + 0.10f).coerceAtMost(MAX_WIDGET_SCALE)
+        gestureScale = next
+        onScaleChange(next)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
       },
       onZoomOut = {
-        onScaleChange((gestureScale - 0.10f).coerceAtLeast(MIN_WIDGET_SCALE))
+        val next = (gestureScale - 0.10f).coerceAtLeast(MIN_WIDGET_SCALE)
+        gestureScale = next
+        onScaleChange(next)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
       },
       onReset = {

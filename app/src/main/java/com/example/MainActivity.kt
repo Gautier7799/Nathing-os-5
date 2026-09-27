@@ -107,6 +107,7 @@ fun NothingLauncherApp(
   settings: LauncherSettings,
   modifier: Modifier = Modifier
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
   val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
   val currentTime by viewModel.currentTime.collectAsStateWithLifecycle()
   val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
@@ -203,7 +204,11 @@ fun NothingLauncherApp(
       onReorderPinnedApps = { from, to -> viewModel.movePinnedApp(from, to) },
       onRemovePinnedApp = { app -> viewModel.removePinnedApp(app) },
       onToggleDockApp = { app -> viewModel.toggleDockApp(app) },
-      onToggleWidget = { widgetType -> viewModel.toggleWidgetActive(widgetType) }
+      onToggleWidget = { widgetType -> viewModel.toggleWidgetActive(widgetType) },
+      isDrawerOpen = currentScreen == LauncherScreen.APP_DRAWER,
+      onWidgetScaleChange = { widgetType, scale -> viewModel.setWidgetScale(widgetType, scale) },
+      onResetWidgetScale = { widgetType -> viewModel.resetWidgetScale(widgetType) },
+      onWidgetInfo = { widgetType -> viewModel.openWidgetAppInfo(widgetType) }
     )
 
     // 2. App Drawer Screen (Animated slide in/out)

@@ -286,6 +286,25 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
   }
 
+  fun setWidgetScale(widgetType: NosWidgetPortType, scale: Float) {
+    val clamped = scale.coerceIn(0.75f, 1.5f)
+    _settings.update { current ->
+      current.copy(widgetScales = current.widgetScales + (widgetType.name to clamped))
+    }
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      LauncherSettingsStore.save(context, _settings.value)
+    }
+  }
+
+  fun resetWidgetScale(widgetType: NosWidgetPortType) {
+    _settings.update { current ->
+      current.copy(widgetScales = current.widgetScales - widgetType.name)
+    }
+    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+      LauncherSettingsStore.save(context, _settings.value)
+    }
+  }
+
   fun toggleWidgetActive(widgetType: NosWidgetPortType) {
     _settings.update { current ->
       val currentList = current.activeWidgets.toMutableList()
@@ -592,6 +611,31 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     // Always give feedback so user knows the click succeeded immediately
     android.widget.Toast.makeText(context, "Nothing OS: ${app.label}", android.widget.Toast.LENGTH_SHORT).show()
+  }
+
+  fun openWidgetAppInfo(widgetType: NosWidgetPortType) {
+    val candidate = when (widgetType) {
+      NosWidgetPortType.CALENDAR_DIGITAL_TIME -> AppItem("com.google.android.calendar", "", "Calendar")
+      NosWidgetPortType.CLOCK_MAIN -> AppItem("com.google.android.deskclock", "", "Clock")
+      NosWidgetPortType.WEATHER_MAIN, NosWidgetPortType.MINI_CLUSTER_2X2 -> AppItem("com.nothing.weather", "", "Weather")
+      NosWidgetPortType.CASSETTE_PLAYER -> AppItem("com.nothing.soundrecorder", "", "Recorder")
+      NosWidgetPortType.NOTHING_X_EARBUDS -> AppItem("com.nothing.hearse", "", "Nothing X")
+      else -> null
+    }
+    if (candidate != null) {
+      try {
+        context.packageManager.getPackageInfo(candidate.packageName, 0)
+        openAppInfo(candidate)
+        return
+      } catch (_: Exception) {
+        // The companion app is not installed; fall through to a clear message.
+      }
+    }
+    android.widget.Toast.makeText(
+      context,
+      "No companion app installed for ${widgetType.name.replace('_', ' ')}",
+      android.widget.Toast.LENGTH_SHORT
+    ).show()
   }
 
   fun openAppInfo(app: AppItem) {

@@ -77,6 +77,7 @@ object LauncherSettingsStore {
       put("swipeDownNotifications", settings.swipeDownNotifications)
       put("showSearchBarOnDock", settings.showSearchBarOnDock)
       put("hapticFeedbackEnabled", settings.hapticFeedbackEnabled)
+      put("widgetScales", JSONObject(settings.widgetScales.mapValues { (_, v) -> v.toDouble() }))
       put("wallpaperIndex", settings.wallpaperIndex)
       put("customWallpaperUri", settings.customWallpaperUri)
       put("lockScreenWallpaperIndex", settings.lockScreenWallpaperIndex)
@@ -100,6 +101,18 @@ object LauncherSettingsStore {
       .edit()
       .putString(KEY_SETTINGS, o.toString())
       .apply()
+  }
+
+  private fun loadWidgetScales(o: JSONObject): Map<String, Float> {
+    val scales = o.optJSONObject("widgetScales") ?: return emptyMap()
+    val result = mutableMapOf<String, Float>()
+    val keys = scales.keys()
+    while (keys.hasNext()) {
+      val key = keys.next()
+      val value = scales.optDouble(key, 1.0).toFloat().coerceIn(0.75f, 1.5f)
+      result[key] = value
+    }
+    return result
   }
 
   private inline fun <reified T : Enum<T>> enumOr(

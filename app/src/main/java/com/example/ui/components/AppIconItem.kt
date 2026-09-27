@@ -63,6 +63,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -135,6 +137,7 @@ fun AppIconItem(
 ) {
   val theme = LocalLauncherTheme.current
   val isDark = theme.isDark
+  val haptic = LocalHapticFeedback.current
 
   val pastelBg = remember(app.label) {
     PASTEL_COLOUR_BADGE_PALETTE[abs(app.label.hashCode()) % PASTEL_COLOUR_BADGE_PALETTE.size]
@@ -144,8 +147,14 @@ fun AppIconItem(
     modifier = modifier
       .clip(RoundedCornerShape(12.dp))
       .combinedClickable(
-        onClick = onClick,
-        onLongClick = onLongClick
+        onClick = {
+          haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+          onClick()
+        },
+        onLongClick = {
+          haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+          onLongClick?.invoke()
+        }
       )
       .padding(4.dp)
       .testTag("app_item_${app.packageName}"),

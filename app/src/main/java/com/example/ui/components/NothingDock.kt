@@ -64,8 +64,8 @@ fun NothingDock(
       modifier = Modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(32.dp))
-        .background(theme.dockBg.copy(alpha = if (theme.isDark) 0.72f else 0.62f))
-        .border(1.dp, theme.border.copy(alpha = 0.72f), RoundedCornerShape(32.dp))
+        .background(theme.dockBg.copy(alpha = if (theme.isDark) 0.34f else 0.30f))
+        .border(1.dp, theme.border.copy(alpha = 0.38f), RoundedCornerShape(32.dp))
         .padding(horizontal = 12.dp, vertical = 8.dp),
       horizontalArrangement = Arrangement.SpaceEvenly,
       verticalAlignment = Alignment.CenterVertically
@@ -95,8 +95,8 @@ fun NothingDock(
           .height(44.dp)
           .shadow(8.dp, RoundedCornerShape(22.dp), clip = false)
           .clip(RoundedCornerShape(22.dp))
-          .background(theme.searchPillBg.copy(alpha = if (theme.isDark) 0.76f else 0.68f))
-          .border(1.dp, theme.border.copy(alpha = 0.72f), RoundedCornerShape(22.dp))
+          .background(theme.searchPillBg.copy(alpha = if (theme.isDark) 0.38f else 0.34f))
+          .border(1.dp, theme.border.copy(alpha = 0.38f), RoundedCornerShape(22.dp))
           .clickable { onOpenSearch() }
           .padding(horizontal = 16.dp)
           .testTag("nothing_search_pill"),

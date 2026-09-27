@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -104,6 +105,7 @@ import com.example.ui.components.NosQuickListWidget
 import com.example.ui.components.NosStickerFocusClusterWidget
 import com.example.ui.components.NosWidgetPortSheet
 import com.example.ui.components.NothingAnalogClockWidget
+import com.example.ui.components.ScalableWidget
 import com.example.ui.components.NothingCassetteWidget
 import com.example.ui.components.NothingClockWidget
 import com.example.ui.components.NothingDock
@@ -120,6 +122,27 @@ import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevated
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingWhite
+
+@Composable
+private fun HomeWidgetHost(
+  widgetType: NosWidgetPortType,
+  settings: LauncherSettings,
+  accentColor: Color,
+  onScaleChange: (NosWidgetPortType, Float) -> Unit,
+  onReset: (NosWidgetPortType) -> Unit,
+  onInfo: (NosWidgetPortType) -> Unit,
+  content: @Composable () -> Unit
+) {
+  ScalableWidget(
+    widgetType = widgetType,
+    scale = settings.widgetScales[widgetType.name] ?: 1f,
+    onScaleChange = { onScaleChange(widgetType, it) },
+    onReset = { onReset(widgetType) },
+    onWidgetInfo = { onInfo(widgetType) },
+    accentColor = accentColor,
+    content = content
+  )
+}
 
 @Composable
 fun HomeScreen(
@@ -158,6 +181,10 @@ fun HomeScreen(
   onToggleWidget: (NosWidgetPortType) -> Unit = {},
   onOpenAppInfo: (AppItem) -> Unit = {},
   onSwipeUp: () -> Unit = {},
+  isDrawerOpen: Boolean = false,
+  onWidgetScaleChange: (NosWidgetPortType, Float) -> Unit = { _, _ -> },
+  onResetWidgetScale: (NosWidgetPortType) -> Unit = {},
+  onWidgetInfo: (NosWidgetPortType) -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val theme = LocalLauncherTheme.current
@@ -194,6 +221,7 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
+      .then(if (isDrawerOpen) Modifier.blur(18.dp) else Modifier)
       // Global gesture layer: observe swipes before child scroll containers without
       // consuming them, so the entire launcher surface can open the app drawer.
       .pointerInput(Unit) {
@@ -212,7 +240,7 @@ fun HomeScreen(
             } else {
               lastY = change.position.y
               if (change.changedToUp()) {
-                if (lastY - down.position.y < -80f) {
+                if (lastY - down.position.y < -140f) {
                   onSwipeUp()
                 }
                 finished = true
@@ -250,7 +278,7 @@ fun HomeScreen(
                   .pointerInput(settings.swipeDownNotifications) {
                     if (settings.swipeDownNotifications) {
                       detectVerticalDragGestures { _, dragAmount ->
-                        if (dragAmount > 30f) {
+                        if (dragAmount > 70f) {
                           onSwipeDown()
                         }
                       }
@@ -351,44 +379,52 @@ fun HomeScreen(
         // 1. Calendar & Digital Time Widget (Screenshot 2: JUL TUESDAY 07H 10M)
         if (settings.activeWidgets.contains(NosWidgetPortType.CALENDAR_DIGITAL_TIME)) {
           item {
-            NosCalendarDigitalTimeWidget(
-              currentTime = currentTime,
-              accentColor = accentColor,
-              onCalendarClick = { SystemPortHelper.launchPixelCalendar(context) },
-              onClockClick = { SystemPortHelper.launchPixelClock(context) }
-            )
+            HomeWidgetHost(
+              NosWidgetPortType.CALENDAR_DIGITAL_TIME, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              NosCalendarDigitalTimeWidget(
+                currentTime = currentTime,
+                accentColor = accentColor,
+                onCalendarClick = { SystemPortHelper.launchPixelCalendar(context) },
+                onClockClick = { SystemPortHelper.launchPixelClock(context) }
+              )
+            }
           }
         }
 
         // 2. 2x2 Mini Cluster (Screenshot 2) + Analog Clock / Weather
         if (settings.activeWidgets.contains(NosWidgetPortType.MINI_CLUSTER_2X2)) {
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            HomeWidgetHost(
+              NosWidgetPortType.MINI_CLUSTER_2X2, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
             ) {
-              NosMiniClusterWidget(
-                weather = weather,
-                accentColor = accentColor,
-                onWeatherClick = { SystemPortHelper.launchPixelWeather(context) },
-                onHealthClick = { SystemPortHelper.launchHealthConnect(context) },
-                onRecorderClick = { SystemPortHelper.launchPixelClock(context) },
-                modifier = Modifier.weight(1f)
-              )
-
-              if (settings.activeWidgets.contains(NosWidgetPortType.CLOCK_MAIN)) {
-                val timeParts = currentTime.split(":")
-                val hours = timeParts.getOrNull(0) ?: "12"
-                val minutes = timeParts.getOrNull(1) ?: "00"
-                NothingAnalogClockWidget(
-                  hours = hours,
-                  minutes = minutes,
-                  date = currentDate,
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                NosMiniClusterWidget(
+                  weather = weather,
                   accentColor = accentColor,
-                  onToggleStyle = onToggleClockStyle,
-                  onOpenClockPort = { SystemPortHelper.launchPixelClock(context) },
+                  onWeatherClick = { SystemPortHelper.launchPixelWeather(context) },
+                  onHealthClick = { SystemPortHelper.launchHealthConnect(context) },
+                  onRecorderClick = { SystemPortHelper.launchPixelClock(context) },
                   modifier = Modifier.weight(1f)
                 )
+
+                if (settings.activeWidgets.contains(NosWidgetPortType.CLOCK_MAIN)) {
+                  val timeParts = currentTime.split(":")
+                  val hours = timeParts.getOrNull(0) ?: "12"
+                  val minutes = timeParts.getOrNull(1) ?: "00"
+                  NothingAnalogClockWidget(
+                    hours = hours,
+                    minutes = minutes,
+                    date = currentDate,
+                    accentColor = accentColor,
+                    onToggleStyle = onToggleClockStyle,
+                    onOpenClockPort = { SystemPortHelper.launchPixelClock(context) },
+                    modifier = Modifier.weight(1f)
+                  )
+                }
               }
             }
           }
@@ -398,24 +434,22 @@ fun HomeScreen(
             val timeParts = currentTime.split(":")
             val hours = timeParts.getOrNull(0) ?: "12"
             val minutes = timeParts.getOrNull(1) ?: "00"
-            if (settings.clockStyle == LauncherClockStyle.ANALOG) {
-              NothingAnalogClockWidget(
-                hours = hours,
-                minutes = minutes,
-                date = currentDate,
-                accentColor = accentColor,
-                onToggleStyle = onToggleClockStyle,
-                onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
-              )
-            } else {
-              NothingClockWidget(
-                hours = hours,
-                minutes = minutes,
-                date = currentDate,
-                accentColor = accentColor,
-                onToggleStyle = onToggleClockStyle,
-                onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
-              )
+            HomeWidgetHost(
+              NosWidgetPortType.CLOCK_MAIN, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              if (settings.clockStyle == LauncherClockStyle.ANALOG) {
+                NothingAnalogClockWidget(
+                  hours = hours, minutes = minutes, date = currentDate, accentColor = accentColor,
+                  onToggleStyle = onToggleClockStyle,
+                  onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
+                )
+              } else {
+                NothingClockWidget(
+                  hours = hours, minutes = minutes, date = currentDate, accentColor = accentColor,
+                  onToggleStyle = onToggleClockStyle,
+                  onOpenClockPort = { SystemPortHelper.launchPixelClock(context) }
+                )
+              }
             }
           }
         }
@@ -423,52 +457,64 @@ fun HomeScreen(
         // 3. Text Glance Summary Widget (Screenshot 2: "TODAY IS TUESDAY AND TIME IS...")
         if (settings.activeWidgets.contains(NosWidgetPortType.GLANCE_TEXT_SUMMARY)) {
           item {
-            NosGlanceTextWidget(
-              currentTime = currentTime,
-              weather = weather,
-              batteryPct = toggles.batteryLevel,
-              isCharging = toggles.isCharging,
-              onGlanceClick = { SystemPortHelper.launchPixelWeather(context) }
-            )
+            HomeWidgetHost(
+              NosWidgetPortType.GLANCE_TEXT_SUMMARY, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              NosGlanceTextWidget(
+                currentTime = currentTime,
+                weather = weather,
+                batteryPct = toggles.batteryLevel,
+                isCharging = toggles.isCharging,
+                onGlanceClick = { SystemPortHelper.launchPixelWeather(context) }
+              )
+            }
           }
         }
 
         // 3.5. Giant Circles Cluster (Screenshot 3: Giant Camera, Rain Weather, Globe Disc)
         if (settings.activeWidgets.contains(NosWidgetPortType.GIANT_CIRCLES_CLUSTER)) {
           item {
-            NosGiantCirclesClusterWidget(
-              weather = weather,
-              currentTime = currentTime,
-              accentColor = accentColor,
-              onLaunchCamera = {
-                val camApp = AppItem("com.google.android.GoogleCamera", "", "Camera")
-                onAppClick(camApp)
-              },
-              onLaunchWeather = {
-                SystemPortHelper.launchPixelWeather(context)
-              }
-            )
+            HomeWidgetHost(
+              NosWidgetPortType.GIANT_CIRCLES_CLUSTER, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              NosGiantCirclesClusterWidget(
+                weather = weather,
+                currentTime = currentTime,
+                accentColor = accentColor,
+                onLaunchCamera = {
+                  val camApp = AppItem("com.google.android.GoogleCamera", "", "Camera")
+                  onAppClick(camApp)
+                },
+                onLaunchWeather = { SystemPortHelper.launchPixelWeather(context) }
+              )
+            }
           }
         }
 
         // 3.6. Sticker & Focus Cluster (Screenshot 5: Focus rings, Retro Car, Capsule)
         if (settings.activeWidgets.contains(NosWidgetPortType.STICKER_FOCUS_CLUSTER)) {
           item {
-            NosStickerFocusClusterWidget(accentColor = accentColor)
+            HomeWidgetHost(
+              NosWidgetPortType.STICKER_FOCUS_CLUSTER, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) { NosStickerFocusClusterWidget(accentColor = accentColor) }
           }
         }
 
         // 3.7. Nothing X Earbuds Widget (Screenshot 5: Headphones 90%, ANC mode)
         if (settings.activeWidgets.contains(NosWidgetPortType.NOTHING_X_EARBUDS)) {
           item {
-            NosNothingXEarbudsWidget(accentColor = accentColor)
+            HomeWidgetHost(
+              NosWidgetPortType.NOTHING_X_EARBUDS, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) { NosNothingXEarbudsWidget(accentColor = accentColor) }
           }
         }
 
         // 4. NOS 3.5 Circular Progress Gauges (Screenshot 1: Music 73%, Red Flame 57°C, Bell 98%)
         if (settings.activeWidgets.contains(NosWidgetPortType.CIRCULAR_GAUGES)) {
           item {
-            NosCircularGaugesWidget(accentColor = accentColor)
+            HomeWidgetHost(
+              NosWidgetPortType.CIRCULAR_GAUGES, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) { NosCircularGaugesWidget(accentColor = accentColor) }
           }
         }
 
@@ -476,21 +522,19 @@ fun HomeScreen(
         if (settings.activeWidgets.contains(NosWidgetPortType.DECIBEL_SOUND_METER) ||
             settings.activeWidgets.contains(NosWidgetPortType.QUICK_CHECKLIST)) {
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            HomeWidgetHost(
+              NosWidgetPortType.DECIBEL_SOUND_METER, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
             ) {
-              if (settings.activeWidgets.contains(NosWidgetPortType.DECIBEL_SOUND_METER)) {
-                NosDecibelWidget(
-                  accentColor = accentColor,
-                  modifier = Modifier.weight(1f)
-                )
-              }
-              if (settings.activeWidgets.contains(NosWidgetPortType.QUICK_CHECKLIST)) {
-                NosQuickListWidget(
-                  accentColor = accentColor,
-                  modifier = Modifier.weight(1.2f)
-                )
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                if (settings.activeWidgets.contains(NosWidgetPortType.DECIBEL_SOUND_METER)) {
+                  NosDecibelWidget(accentColor = accentColor, modifier = Modifier.weight(1f))
+                }
+                if (settings.activeWidgets.contains(NosWidgetPortType.QUICK_CHECKLIST)) {
+                  NosQuickListWidget(accentColor = accentColor, modifier = Modifier.weight(1.2f))
+                }
               }
             }
           }
@@ -499,36 +543,37 @@ fun HomeScreen(
         // 6. Favorite Contact Pill (Screenshot 1)
         if (settings.activeWidgets.contains(NosWidgetPortType.CONTACT_PILL)) {
           item {
-            NosContactPillWidget(
-              accentColor = accentColor,
-              onCall = { SystemPortHelper.launchPixelClock(context) },
-              onChat = { SystemPortHelper.launchPixelCalendar(context) }
-            )
+            HomeWidgetHost(
+              NosWidgetPortType.CONTACT_PILL, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              NosContactPillWidget(
+                accentColor = accentColor,
+                onCall = { SystemPortHelper.launchPixelClock(context) },
+                onChat = { SystemPortHelper.launchPixelCalendar(context) }
+              )
+            }
           }
         }
 
         // 7. 2-Column Modular Widgets: Weather + Quick Toggles
         if (settings.activeWidgets.contains(NosWidgetPortType.WEATHER_MAIN)) {
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            HomeWidgetHost(
+              NosWidgetPortType.WEATHER_MAIN, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
             ) {
-              NothingWeatherWidget(
-                weather = weather,
-                onToggleCondition = onToggleWeather,
-                accentColor = accentColor,
-                onOpenWeatherPort = { SystemPortHelper.launchPixelWeather(context) },
-                modifier = Modifier.weight(1f)
-              )
-
-              NothingQuickTogglesWidget(
-                toggles = toggles,
-                onToggleTorch = onToggleTorch,
-                onCycleSound = onCycleSound,
-                accentColor = accentColor,
-                modifier = Modifier.weight(1.1f)
-              )
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                NothingWeatherWidget(
+                  weather = weather, onToggleCondition = onToggleWeather, accentColor = accentColor,
+                  onOpenWeatherPort = { SystemPortHelper.launchPixelWeather(context) }, modifier = Modifier.weight(1f)
+                )
+                NothingQuickTogglesWidget(
+                  toggles = toggles, onToggleTorch = onToggleTorch, onCycleSound = onCycleSound,
+                  accentColor = accentColor, modifier = Modifier.weight(1.1f)
+                )
+              }
             }
           }
         }
@@ -536,46 +581,51 @@ fun HomeScreen(
         // 8. Teenage Cassette Retro Player
         if (settings.activeWidgets.contains(NosWidgetPortType.CASSETTE_PLAYER)) {
           item {
-            NothingCassetteWidget(
-              audio = audio,
-              onTogglePlay = onToggleAudioPlay,
-              onNextTrack = onNextAudioTrack,
-              accentColor = accentColor
-            )
+            HomeWidgetHost(
+              NosWidgetPortType.CASSETTE_PLAYER, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+            ) {
+              NothingCassetteWidget(
+                audio = audio,
+                onTogglePlay = onToggleAudioPlay,
+                onNextTrack = onNextAudioTrack,
+                accentColor = accentColor
+              )
+            }
           }
         }
 
         // 9. 2-Column Widgets: Pedometer & Storage/RAM
         if (settings.activeWidgets.contains(NosWidgetPortType.PEDOMETER_GAUGE)) {
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            HomeWidgetHost(
+              NosWidgetPortType.PEDOMETER_GAUGE, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
             ) {
-              NothingStepWidget(
-                fitness = fitness,
-                onAddStep = onAddStep,
-                accentColor = accentColor,
-                modifier = Modifier.weight(1.1f)
-              )
-
-              NothingResourceWidget(
-                storagePct = storagePct,
-                ramPct = ramPct,
-                accentColor = accentColor,
-                modifier = Modifier.weight(1f)
-              )
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                NothingStepWidget(
+                  fitness = fitness, onAddStep = onAddStep, accentColor = accentColor, modifier = Modifier.weight(1.1f)
+                )
+                NothingResourceWidget(
+                  storagePct = storagePct, ramPct = ramPct, accentColor = accentColor, modifier = Modifier.weight(1f)
+                )
+              }
             }
           }
         }
 
         // 10. Quick Memo
         item {
-          NothingQuickNoteWidget(
-            note = quickNote,
-            onEditNote = onEditNote,
-            accentColor = accentColor
-          )
+          HomeWidgetHost(
+            NosWidgetPortType.QUICK_CHECKLIST, settings, accentColor, onWidgetScaleChange, onResetWidgetScale, onWidgetInfo
+          ) {
+            NothingQuickNoteWidget(
+              note = quickNote,
+              onEditNote = onEditNote,
+              accentColor = accentColor
+            )
+          }
         }
 
         // 11. Signature Nothing OS 2x2 Enlarged Folders
@@ -690,9 +740,9 @@ fun HomeScreen(
                                     itemDragOffset += dragAmount
                                   },
                                   onDragEnd = {
-                                    if (itemDragOffset > 40f && actualIndex < pinnedApps.size - 1) {
+                                    if (itemDragOffset > 70f && actualIndex < pinnedApps.size - 1) {
                                       onReorderPinnedApps(actualIndex, actualIndex + 1)
-                                    } else if (itemDragOffset < -40f && actualIndex > 0) {
+                                    } else if (itemDragOffset < -70f && actualIndex > 0) {
                                       onReorderPinnedApps(actualIndex, actualIndex - 1)
                                     }
                                     itemDragOffset = 0f
@@ -718,7 +768,7 @@ fun HomeScreen(
                             }
                           },
                           onLongClick = {
-                            isReorderingFavorites = true
+                            onOpenAppInfo(app)
                           },
                           iconSize = 52.dp,
                           showLabel = settings.showLabels,

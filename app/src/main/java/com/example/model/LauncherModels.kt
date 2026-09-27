@@ -155,6 +155,7 @@ data class LauncherSettings(
   val swipeDownNotifications: Boolean = true,
   val showSearchBarOnDock: Boolean = true,
   val hapticFeedbackEnabled: Boolean = true,
+  val widgetScales: Map<String, Float> = emptyMap(),
   val wallpaperIndex: Int = 0, // 0: Dot Matrix, 1: Carbon Matte, 2: Circuit Glow, 3: Light Dots, 4: Glyph Neon, 5: Retro Grid, 6: Red Abstract, 7: Custom Photo
   val customWallpaperUri: String? = null,
   val lockScreenWallpaperIndex: Int = -1, // -1 means same as launcher wallpaper

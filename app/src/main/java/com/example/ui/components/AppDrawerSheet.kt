@@ -63,6 +63,8 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -129,7 +131,7 @@ fun AppDrawerSheet(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(theme.background)
+      .background(theme.background.copy(alpha = 0.84f))
       // Swipe down anywhere in the drawer returns to Home; child scrolling is not consumed.
       .pointerInput(Unit) {
         awaitEachGesture {
@@ -147,7 +149,7 @@ fun AppDrawerSheet(
             } else {
               lastY = change.position.y
               if (change.changedToUp()) {
-                if (lastY - down.position.y > 80f) onClose()
+                if (lastY - down.position.y > 140f) onClose()
                 finished = true
               }
             }
@@ -526,6 +528,7 @@ private fun AppContextMenuSheet(
   accentColor: Color
 ) {
   val theme = LocalLauncherTheme.current
+  val haptic = LocalHapticFeedback.current
   val sheetState = rememberModalBottomSheetState()
 
   ModalBottomSheet(
@@ -611,11 +614,15 @@ private fun MenuRow(
   textColor: Color = NothingWhite,
   onClick: () -> Unit
 ) {
+  val haptic = LocalHapticFeedback.current
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(12.dp))
-      .clickable { onClick() }
+      .clickable {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onClick()
+      }
       .padding(vertical = 12.dp, horizontal = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(16.dp)

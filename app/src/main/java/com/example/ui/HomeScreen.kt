@@ -63,10 +63,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.testTag
@@ -221,37 +217,6 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
-      // Avoid expensive full-screen blur while the drawer animates; dimming is handled by the drawer layer.
-      // Stable drawer gesture: bottom-edge only and only while the Home list is at the top.
-      // Normal one-finger widget scrolling remains untouched.
-      .pointerInput(homeListState.firstVisibleItemIndex, homeListState.firstVisibleItemScrollOffset) {
-        awaitEachGesture {
-          val down = awaitFirstDown(
-            requireUnconsumed = false,
-            pass = PointerEventPass.Initial
-          )
-          val startedAtBottomEdge = down.position.y >= size.height * 0.68f
-          val startedAtHomeTop = homeListState.firstVisibleItemIndex == 0 &&
-            homeListState.firstVisibleItemScrollOffset == 0
-          var triggered = false
-
-          while (true) {
-            val event = awaitPointerEvent(PointerEventPass.Initial)
-            val change = event.changes.firstOrNull() ?: break
-            val dx = change.position.x - down.position.x
-            val dy = change.position.y - down.position.y
-
-            if (!triggered && startedAtBottomEdge && startedAtHomeTop &&
-                dy < -220f && abs(dy) > abs(dx) * 1.25f) {
-              change.consume()
-              triggered = true
-              onSwipeUp()
-            }
-
-            if (event.changes.all { !it.pressed }) break
-          }
-        }
-      }
       .testTag("home_screen_container")
   ) {
     // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)

@@ -221,7 +221,7 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
-      .then(if (isDrawerOpen) Modifier.blur(18.dp) else Modifier)
+      // Avoid expensive full-screen blur while the drawer animates; dimming is handled by the drawer layer.
       // Stable drawer gesture: bottom-edge only and only while the Home list is at the top.
       // Normal one-finger widget scrolling remains untouched.
       .pointerInput(homeListState.firstVisibleItemIndex, homeListState.firstVisibleItemScrollOffset) {
@@ -377,6 +377,7 @@ fun HomeScreen(
           .weight(1f)
           .fillMaxWidth()
           .padding(horizontal = 16.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 48.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
       ) {
         // 1. Calendar & Digital Time Widget (Screenshot 2: JUL TUESDAY 07H 10M)
@@ -881,7 +882,8 @@ fun HomeScreen(
         onOpenAppInfo = onOpenAppInfo,
         iconPack = settings.iconPack,
         accentColor = accentColor,
-        showSearchBar = settings.showSearchBarOnDock
+        // Search dock is intentionally removed from the launcher surface.
+        showSearchBar = false
       )
     }
 

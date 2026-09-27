@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
+import com.example.service.SystemPortHelper
+import androidx.compose.ui.platform.LocalContext
 import com.example.model.IconPackStyle
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
@@ -56,6 +58,7 @@ fun NothingDock(
   showSearchBar: Boolean = true
 ) {
   val theme = LocalLauncherTheme.current
+  val context = LocalContext.current
 
   Column(
     modifier = modifier
@@ -122,7 +125,7 @@ fun NothingDock(
           .clip(RoundedCornerShape(22.dp))
           .background(theme.searchPillBg.copy(alpha = if (theme.isDark) 0.38f else 0.34f))
           .border(1.dp, theme.border.copy(alpha = 0.38f), RoundedCornerShape(22.dp))
-          .clickable { onOpenSearch() }
+          .clickable { SystemPortHelper.launchGoogleAiSearch(context) }
           .padding(horizontal = 16.dp)
           .testTag("nothing_search_pill"),
         verticalAlignment = Alignment.CenterVertically,
@@ -139,7 +142,7 @@ fun NothingDock(
             modifier = Modifier.size(18.dp)
           )
           Text(
-            text = if (!theme.isDark) "Search" else "SEARCH OR TYPE URL...",
+            text = if (!theme.isDark) "Google AI" else "GOOGLE AI SEARCH...",
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
             color = theme.textSecondary,

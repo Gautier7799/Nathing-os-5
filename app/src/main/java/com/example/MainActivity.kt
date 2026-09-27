@@ -36,6 +36,7 @@ import com.example.ui.HomeScreen
 import com.example.ui.NothingLockScreen
 import com.example.ui.components.ACCENT_COLORS
 import com.example.ui.components.AppDrawerSheet
+import com.example.ui.components.AppOptionsSheet
 import com.example.ui.components.EditNoteDialog
 import com.example.ui.components.ExpandedFolderSheet
 import com.example.ui.components.LauncherSettingsDialog
@@ -128,6 +129,7 @@ fun NothingLauncherApp(
 
   var isEditingNote by remember { mutableStateOf(false) }
   var isSettingsOpen by remember { mutableStateOf(false) }
+  var selectedAppForOptions by remember { mutableStateOf<com.example.model.AppItem?>(null) }
 
   val accentColor = remember(settings.accentColorIndex) {
     ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
@@ -175,7 +177,7 @@ fun NothingLauncherApp(
       onEditNote = { isEditingNote = true },
       onOpenDrawer = { viewModel.setScreen(LauncherScreen.APP_DRAWER) },
       onOpenSettings = { isSettingsOpen = true },
-      onOpenAppInfo = { app -> viewModel.openAppInfo(app) },
+      onOpenAppInfo = { app -> selectedAppForOptions = app },
       onSwipeUp = {
         if (currentScreen == LauncherScreen.HOME) {
           viewModel.setSearchQuery("")
@@ -224,7 +226,7 @@ fun NothingLauncherApp(
         onAppClick = { app -> viewModel.launchApp(app) },
         onTogglePin = { app -> viewModel.togglePinApp(app) },
         onToggleDock = { app -> viewModel.toggleDockApp(app) },
-        onOpenAppInfo = { app -> viewModel.openAppInfo(app) },
+        onOpenAppInfo = { app -> selectedAppForOptions = app },
         onClose = {
           viewModel.setSearchQuery("")
           viewModel.setScreen(LauncherScreen.HOME)
@@ -256,6 +258,22 @@ fun NothingLauncherApp(
         onToggleEnlarged = { viewModel.toggleFolderEnlarged(folder.id) },
         iconPack = settings.iconPack,
         accentColor = accentColor
+      )
+    }
+
+    // Compose app options sheet: long-pressing an icon opens this menu with
+    // Open / Pin / Dock / App Info actions instead of the old floating context menu.
+    selectedAppForOptions?.let { app ->
+      AppOptionsSheet(
+        app = app,
+        isPinned = pinnedApps.any { it.id == app.id },
+        isDocked = dockApps.any { it.id == app.id },
+        accentColor = accentColor,
+        onOpenApp = { viewModel.launchApp(app) },
+        onTogglePin = { viewModel.togglePinApp(app) },
+        onToggleDock = { viewModel.toggleDockApp(app) },
+        onOpenAppInfo = { viewModel.openAppInfo(app) },
+        onDismiss = { selectedAppForOptions = null }
       )
     }
 

@@ -54,10 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -70,7 +66,6 @@ import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingRed
 import kotlinx.coroutines.launch
 import java.util.Locale
-import kotlin.math.abs
 
 @Composable
 fun AppDrawerSheet(
@@ -123,33 +118,7 @@ fun AppDrawerSheet(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(theme.background.copy(alpha = 0.84f))
-      // Stable drawer close gesture: top-edge only, so grid scrolling cannot close the drawer.
-      .pointerInput(Unit) {
-        awaitEachGesture {
-          val down = awaitFirstDown(
-            requireUnconsumed = false,
-            pass = PointerEventPass.Initial
-          )
-          val startedAtTopEdge = down.position.y <= size.height * 0.18f
-          var triggered = false
-
-          while (true) {
-            val event = awaitPointerEvent(PointerEventPass.Initial)
-            val change = event.changes.firstOrNull() ?: break
-            val dx = change.position.x - down.position.x
-            val dy = change.position.y - down.position.y
-
-            if (!triggered && startedAtTopEdge && dy > 220f && abs(dy) > abs(dx) * 1.25f) {
-              change.consume()
-              triggered = true
-              onClose()
-            }
-
-            if (event.changes.all { !it.pressed }) break
-          }
-        }
-      }
+      .background(theme.background.copy(alpha = 0.90f))
       .testTag("app_drawer_container")
   ) {
     Column(

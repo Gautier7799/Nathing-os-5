@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -149,14 +150,15 @@ fun ScalableWidget(
           haptic.performHapticFeedback(HapticFeedbackType.LongPress)
           showActions = true
         }
-        .padding(horizontal = 8.dp, vertical = 3.dp),
+        .padding(horizontal = 7.dp, vertical = 2.dp),
       horizontalArrangement = Arrangement.spacedBy(5.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      Text(
-        text = if (abs(gestureScale - 1f) > 0.01f) "WIDGET ${"%.0f".format(gestureScale * 100)}%" else "WIDGET •••",
-        color = accentColor,
-        fontSize = 8.sp
+      Icon(
+        imageVector = Icons.Default.MoreHoriz,
+        contentDescription = "Widget options",
+        tint = accentColor,
+        modifier = Modifier.size(16.dp)
       )
     }
   }
@@ -168,11 +170,15 @@ fun ScalableWidget(
       accentColor = accentColor,
       onDismiss = { showActions = false },
       onZoomIn = {
-        onScaleChange((gestureScale + 0.10f).coerceAtMost(MAX_WIDGET_SCALE))
+        val next = (gestureScale + 0.10f).coerceAtMost(MAX_WIDGET_SCALE)
+        gestureScale = next
+        onScaleChange(next)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
       },
       onZoomOut = {
-        onScaleChange((gestureScale - 0.10f).coerceAtLeast(MIN_WIDGET_SCALE))
+        val next = (gestureScale - 0.10f).coerceAtLeast(MIN_WIDGET_SCALE)
+        gestureScale = next
+        onScaleChange(next)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
       },
       onReset = {

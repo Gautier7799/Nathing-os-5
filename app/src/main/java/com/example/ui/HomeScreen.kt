@@ -193,9 +193,10 @@ fun HomeScreen(
   var showWidgetSheet by remember { mutableStateOf(false) }
   val homeListState = rememberLazyListState()
   var topBarVisible by remember { mutableStateOf(true) }
+  var dockVisible by remember { mutableStateOf(true) }
 
-  // Hide the top controls while moving down through the widgets and restore them
-  // immediately when the user scrolls upward or returns to the top.
+  // Hide the top controls and dock while moving down through widgets.
+  // Restore them immediately when the user scrolls upward or returns to the top.
   LaunchedEffect(homeListState) {
     var previousPosition = 0
     snapshotFlow {
@@ -203,10 +204,13 @@ fun HomeScreen(
     }.distinctUntilChanged().collectLatest { position ->
       if (position <= 8) {
         topBarVisible = true
+        dockVisible = true
       } else if (position > previousPosition) {
         topBarVisible = false
+        dockVisible = false
       } else if (position < previousPosition) {
         topBarVisible = true
+        dockVisible = true
       }
       previousPosition = position
     }
@@ -216,7 +220,7 @@ fun HomeScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .blur(if (isDrawerOpen) 12.dp else 0.dp)
+      .blur(if (isDrawerOpen) 18.dp else 0.dp)
       .background(theme.background)
       .testTag("home_screen_container")
   ) {
@@ -839,9 +843,14 @@ fun HomeScreen(
 
       }
 
-      // Bottom Persistent Nothing Dock & Search
-      NothingDock(
-        dockApps = dockApps,
+      // Bottom Nothing Dock: hides while scrolling down through widgets and returns on upward scroll.
+      AnimatedVisibility(
+        visible = dockVisible,
+        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+      ) {
+        NothingDock(
+          dockApps = dockApps,
         onAppClick = onAppClick,
         onOpenDrawer = onOpenDrawer,
         onOpenSearch = onOpenDrawer,
@@ -849,8 +858,9 @@ fun HomeScreen(
         iconPack = settings.iconPack,
         accentColor = accentColor,
         // Search dock is intentionally removed from the launcher surface.
-        showSearchBar = false
-      )
+          showSearchBar = false
+        )
+      }
     }
 
     // NOS 3.5 Widgets Port Bottom Sheet Picker

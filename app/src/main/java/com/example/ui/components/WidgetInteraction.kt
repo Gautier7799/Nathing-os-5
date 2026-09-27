@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -144,21 +145,21 @@ fun ScalableWidget(
     Spacer(Modifier.height(3.dp))
     Row(
       modifier = Modifier
-        .clip(RoundedCornerShape(10.dp))
-        .background(accentColor.copy(alpha = 0.08f))
+        .size(32.dp)
+        .clip(CircleShape)
+        .background(accentColor.copy(alpha = 0.10f))
         .clickable {
           haptic.performHapticFeedback(HapticFeedbackType.LongPress)
           showActions = true
-        }
-        .padding(horizontal = 7.dp, vertical = 2.dp),
-      horizontalArrangement = Arrangement.spacedBy(5.dp),
+        },
+      horizontalArrangement = Arrangement.Center,
       verticalAlignment = Alignment.CenterVertically
     ) {
       Icon(
-        imageVector = Icons.Default.MoreHoriz,
+        imageVector = Icons.Default.Tune,
         contentDescription = "Widget options",
         tint = accentColor,
-        modifier = Modifier.size(16.dp)
+        modifier = Modifier.size(17.dp)
       )
     }
   }
@@ -275,7 +276,15 @@ private fun WidgetActionRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(16.dp)
   ) {
-    Icon(icon, contentDescription = title, tint = accentColor, modifier = Modifier.size(21.dp))
+    Box(
+      modifier = Modifier
+        .size(34.dp)
+        .clip(CircleShape)
+        .background(accentColor.copy(alpha = 0.10f)),
+      contentAlignment = Alignment.Center
+    ) {
+      Icon(icon, contentDescription = title, tint = accentColor, modifier = Modifier.size(19.dp))
+    }
     Text(title, color = textColor, fontSize = 13.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
   }
 }

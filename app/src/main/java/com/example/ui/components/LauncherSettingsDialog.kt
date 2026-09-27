@@ -1598,11 +1598,6 @@ private fun NothingWidgetsPortSettingsTab(
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    // Pixel Android 17 Ports Integration section
-    PixelPortsSettingsTab(
-      accentColor = accentColor,
-      context = context
-    )
   }
 }
 

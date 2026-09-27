@@ -3,6 +3,7 @@ package com.example.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -423,15 +424,33 @@ fun AppDrawerSheet(
         if (searchQuery.isEmpty() && alphabetLetters.isNotEmpty()) {
           Column(
             modifier = Modifier
-              .width(20.dp)
-              .padding(vertical = 4.dp),
+              .width(24.dp)
+              .fillMaxSize()
+              .clip(RoundedCornerShape(12.dp))
+              .background(theme.surface.copy(alpha = 0.35f))
+              .pointerInput(alphabetLetters, filteredApps) {
+                detectVerticalDragGestures(
+                  onVerticalDrag = { change, _ ->
+                    val fraction = (change.position.y / size.height).coerceIn(0f, 0.999f)
+                    val letterIndex = (fraction * alphabetLetters.size).toInt()
+                    val letter = alphabetLetters.getOrNull(letterIndex) ?: return@detectVerticalDragGestures
+                    val targetIdx = filteredApps.indexOfFirst {
+                      it.label.startsWith(letter, ignoreCase = true)
+                    }
+                    if (targetIdx >= 0) {
+                      scope.launch { gridState.scrollToItem(targetIdx) }
+                    }
+                    change.consume()
+                  }
+                )
+              },
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceEvenly
           ) {
             alphabetLetters.forEach { letter ->
               Text(
                 text = letter.toString(),
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
                 color = theme.textSecondary,
@@ -444,7 +463,6 @@ fun AppDrawerSheet(
                       scope.launch { gridState.animateScrollToItem(targetIdx) }
                     }
                   }
-                  .padding(vertical = 1.dp)
               )
             }
           }

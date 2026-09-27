@@ -266,8 +266,8 @@ fun NothingLauncherApp(
     selectedAppForOptions?.let { app ->
       AppOptionsSheet(
         app = app,
-        isPinned = pinnedApps.any { it.id == app.id },
-        isDocked = dockApps.any { it.id == app.id },
+        isPinned = pinnedApps.any { it.packageName == app.packageName },
+        isDocked = dockApps.any { it.packageName == app.packageName },
         accentColor = accentColor,
         onOpenApp = { viewModel.launchApp(app) },
         onTogglePin = { viewModel.togglePinApp(app) },

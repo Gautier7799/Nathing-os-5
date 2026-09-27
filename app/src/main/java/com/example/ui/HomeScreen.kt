@@ -63,10 +63,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.testTag
@@ -197,9 +193,10 @@ fun HomeScreen(
   var showWidgetSheet by remember { mutableStateOf(false) }
   val homeListState = rememberLazyListState()
   var topBarVisible by remember { mutableStateOf(true) }
+  var dockVisible by remember { mutableStateOf(true) }
 
-  // Hide the top controls while moving down through the widgets and restore them
-  // immediately when the user scrolls upward or returns to the top.
+  // Hide the top controls and dock while moving down through widgets.
+  // Restore them immediately when the user scrolls upward or returns to the top.
   LaunchedEffect(homeListState) {
     var previousPosition = 0
     snapshotFlow {
@@ -207,10 +204,13 @@ fun HomeScreen(
     }.distinctUntilChanged().collectLatest { position ->
       if (position <= 8) {
         topBarVisible = true
+        dockVisible = true
       } else if (position > previousPosition) {
         topBarVisible = false
+        dockVisible = false
       } else if (position < previousPosition) {
         topBarVisible = true
+        dockVisible = true
       }
       previousPosition = position
     }
@@ -220,38 +220,8 @@ fun HomeScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
+      .blur(if (isDrawerOpen) 18.dp else 0.dp)
       .background(theme.background)
-      // Avoid expensive full-screen blur while the drawer animates; dimming is handled by the drawer layer.
-      // Stable drawer gesture: bottom-edge only and only while the Home list is at the top.
-      // Normal one-finger widget scrolling remains untouched.
-      .pointerInput(homeListState.firstVisibleItemIndex, homeListState.firstVisibleItemScrollOffset) {
-        awaitEachGesture {
-          val down = awaitFirstDown(
-            requireUnconsumed = false,
-            pass = PointerEventPass.Initial
-          )
-          val startedAtBottomEdge = down.position.y >= size.height * 0.68f
-          val startedAtHomeTop = homeListState.firstVisibleItemIndex == 0 &&
-            homeListState.firstVisibleItemScrollOffset == 0
-          var triggered = false
-
-          while (true) {
-            val event = awaitPointerEvent(PointerEventPass.Initial)
-            val change = event.changes.firstOrNull() ?: break
-            val dx = change.position.x - down.position.x
-            val dy = change.position.y - down.position.y
-
-            if (!triggered && startedAtBottomEdge && startedAtHomeTop &&
-                dy < -220f && abs(dy) > abs(dx) * 1.25f) {
-              change.consume()
-              triggered = true
-              onSwipeUp()
-            }
-
-            if (event.changes.all { !it.pressed }) break
-          }
-        }
-      }
       .testTag("home_screen_container")
   ) {
     // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)
@@ -652,230 +622,16 @@ fun HomeScreen(
           }
         }
 
-        // 7. Pinned Apps on Home (With Full Touch Reordering & Quick Controls)
-        if (pinnedApps.isNotEmpty()) {
-          item {
-            Column(modifier = Modifier.fillMaxWidth()) {
-              Row(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .padding(start = 4.dp, end = 4.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                  Box(
-                    modifier = Modifier
-                      .size(6.dp)
-                      .clip(CircleShape)
-                      .background(accentColor)
-                  )
-                  Text(
-                    text = "FAVORITES",
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = theme.textPrimary,
-                    letterSpacing = 1.sp
-                  )
-                }
-
-                // Rearrange / Move Mode Toggle Pill
-                Box(
-                  modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isReorderingFavorites) accentColor else theme.surface)
-                    .border(1.dp, if (isReorderingFavorites) accentColor else theme.border, RoundedCornerShape(12.dp))
-                    .clickable { isReorderingFavorites = !isReorderingFavorites }
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                    .testTag("rearrange_favorites_button")
-                ) {
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                  ) {
-                    Icon(
-                      imageVector = Icons.Default.SwapHoriz,
-                      contentDescription = null,
-                      tint = if (isReorderingFavorites) NothingBlack else accentColor,
-                      modifier = Modifier.size(13.dp)
-                    )
-                    Text(
-                      text = if (isReorderingFavorites) "DONE" else "REARRANGE",
-                      fontFamily = FontFamily.Monospace,
-                      fontSize = 10.sp,
-                      fontWeight = FontWeight.Bold,
-                      color = if (isReorderingFavorites) NothingBlack else NothingWhite,
-                      letterSpacing = 1.sp
-                    )
-                  }
-                }
-              }
-
-              // Non-nested clean grid using chunked Rows
-              val chunkedApps = pinnedApps.chunked(settings.gridColumns)
-              chunkedApps.forEachIndexed { rowIndex, rowApps ->
-                Row(
-                  modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                  horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                  rowApps.forEachIndexed { colIndex, app ->
-                    val actualIndex = rowIndex * settings.gridColumns + colIndex
-                    var itemDragOffset by remember(app.packageName) { mutableFloatStateOf(0f) }
-
-                    Box(
-                      modifier = Modifier
-                        .weight(1f)
-                        .offset { IntOffset(itemDragOffset.roundToInt(), 0) }
-                        .scale(if (isReorderingFavorites) 1.03f else 1f)
-                        .then(
-                          if (isReorderingFavorites) {
-                            Modifier
-                              .background(NothingDarkSurface.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                              .border(1.dp, accentColor.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                              .pointerInput(app.packageName) {
-                                detectHorizontalDragGestures(
-                                  onHorizontalDrag = { _, dragAmount ->
-                                    itemDragOffset += dragAmount
-                                  },
-                                  onDragEnd = {
-                                    if (itemDragOffset > 70f && actualIndex < pinnedApps.size - 1) {
-                                      onReorderPinnedApps(actualIndex, actualIndex + 1)
-                                    } else if (itemDragOffset < -70f && actualIndex > 0) {
-                                      onReorderPinnedApps(actualIndex, actualIndex - 1)
-                                    }
-                                    itemDragOffset = 0f
-                                  },
-                                  onDragCancel = {
-                                    itemDragOffset = 0f
-                                  }
-                                )
-                              }
-                          } else Modifier
-                        )
-                        .padding(horizontal = 2.dp, vertical = 4.dp),
-                      contentAlignment = Alignment.Center
-                    ) {
-                      Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                      ) {
-                        AppIconItem(
-                          app = app,
-                          onClick = {
-                            if (!isReorderingFavorites) {
-                              onAppClick(app)
-                            }
-                          },
-                          onLongClick = {
-                            onOpenAppInfo(app)
-                          },
-                          iconSize = 52.dp,
-                          showLabel = settings.showLabels,
-                          iconPack = settings.iconPack,
-                          accentColor = accentColor
-                        )
-
-                        // Quick Rearrange Touch Controls when active
-                        if (isReorderingFavorites) {
-                          Row(
-                            modifier = Modifier.padding(top = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                          ) {
-                            if (actualIndex > 0) {
-                              Box(
-                                modifier = Modifier
-                                  .size(24.dp)
-                                  .clip(CircleShape)
-                                  .background(NothingElevated)
-                                  .clickable { onReorderPinnedApps(actualIndex, actualIndex - 1) },
-                                contentAlignment = Alignment.Center
-                              ) {
-                                Icon(
-                                  imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                  contentDescription = "Move Left",
-                                  tint = NothingWhite,
-                                  modifier = Modifier.size(14.dp)
-                                )
-                              }
-                            }
-
-                            if (actualIndex < pinnedApps.size - 1) {
-                              Box(
-                                modifier = Modifier
-                                  .size(24.dp)
-                                  .clip(CircleShape)
-                                  .background(NothingElevated)
-                                  .clickable { onReorderPinnedApps(actualIndex, actualIndex + 1) },
-                                contentAlignment = Alignment.Center
-                              ) {
-                                Icon(
-                                  imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                  contentDescription = "Move Right",
-                                  tint = NothingWhite,
-                                  modifier = Modifier.size(14.dp)
-                                )
-                              }
-                            }
-
-                            Box(
-                              modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(NothingElevated)
-                                .clickable { onOpenAppInfo(app) },
-                              contentAlignment = Alignment.Center
-                            ) {
-                              Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "App info",
-                                tint = NothingWhite,
-                                modifier = Modifier.size(13.dp)
-                              )
-                            }
-
-                            Box(
-                              modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(NothingElevated)
-                                .clickable { onRemovePinnedApp(app) },
-                              contentAlignment = Alignment.Center
-                            ) {
-                              Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Remove",
-                                tint = accentColor,
-                                modifier = Modifier.size(14.dp)
-                              )
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-
-                  // Pad with empty weights if row is incomplete
-                  val missingInRow = settings.gridColumns - rowApps.size
-                  repeat(missingInRow) {
-                    Spacer(modifier = Modifier.weight(1f))
-                  }
-                }
-              }
-            }
-          }
-        }
-
       }
 
-      // Bottom Persistent Nothing Dock & Search
-      NothingDock(
-        dockApps = dockApps,
+      // Bottom Nothing Dock: hides while scrolling down through widgets and returns on upward scroll.
+      AnimatedVisibility(
+        visible = dockVisible,
+        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+      ) {
+        NothingDock(
+          dockApps = dockApps,
         onAppClick = onAppClick,
         onOpenDrawer = onOpenDrawer,
         onOpenSearch = onOpenDrawer,
@@ -883,8 +639,9 @@ fun HomeScreen(
         iconPack = settings.iconPack,
         accentColor = accentColor,
         // Search dock is intentionally removed from the launcher surface.
-        showSearchBar = false
-      )
+          showSearchBar = true
+        )
+      }
     }
 
     // NOS 3.5 Widgets Port Bottom Sheet Picker

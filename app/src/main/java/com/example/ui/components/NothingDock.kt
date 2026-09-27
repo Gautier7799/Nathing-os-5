@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +27,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AppItem
+import com.example.service.SystemPortHelper
+import androidx.compose.ui.platform.LocalContext
 import com.example.model.IconPackStyle
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingBorder
@@ -52,11 +58,33 @@ fun NothingDock(
   showSearchBar: Boolean = true
 ) {
   val theme = LocalLauncherTheme.current
+  val context = LocalContext.current
 
   Column(
     modifier = modifier
       .fillMaxWidth()
-      .padding(horizontal = 16.dp, vertical = 8.dp),
+      .padding(horizontal = 16.dp, vertical = 8.dp)
+      .pointerInput(Unit) {
+        awaitEachGesture {
+          val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
+          )
+          var triggered = false
+          while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull() ?: break
+            val dy = change.position.y - down.position.y
+            val dx = change.position.x - down.position.x
+            if (!triggered && dy < -120f && kotlin.math.abs(dy) > kotlin.math.abs(dx) * 1.2f) {
+              change.consume()
+              triggered = true
+              onOpenDrawer()
+            }
+            if (event.changes.all { !it.pressed }) break
+          }
+        }
+      },
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     // Dock Icons Row (Image 2: Dark / Image 3: Frosted White Capsule)
@@ -97,7 +125,7 @@ fun NothingDock(
           .clip(RoundedCornerShape(22.dp))
           .background(theme.searchPillBg.copy(alpha = if (theme.isDark) 0.38f else 0.34f))
           .border(1.dp, theme.border.copy(alpha = 0.38f), RoundedCornerShape(22.dp))
-          .clickable { onOpenSearch() }
+          .clickable { SystemPortHelper.launchGoogleAiSearch(context) }
           .padding(horizontal = 16.dp)
           .testTag("nothing_search_pill"),
         verticalAlignment = Alignment.CenterVertically,
@@ -114,7 +142,7 @@ fun NothingDock(
             modifier = Modifier.size(18.dp)
           )
           Text(
-            text = if (!theme.isDark) "Search" else "SEARCH OR TYPE URL...",
+            text = if (!theme.isDark) "Google AI" else "GOOGLE AI SEARCH...",
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
             color = theme.textSecondary,

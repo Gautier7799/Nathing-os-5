@@ -64,9 +64,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.consume
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.snapshotFlow
@@ -76,6 +76,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -222,30 +223,33 @@ fun HomeScreen(
       .fillMaxSize()
       .background(theme.background)
       .then(if (isDrawerOpen) Modifier.blur(18.dp) else Modifier)
-      // Global gesture layer: observe swipes before child scroll containers without
-      // consuming them, so the entire launcher surface can open the app drawer.
-      .pointerInput(Unit) {
+      // Stable drawer gesture: bottom-edge only and only while the Home list is at the top.
+      // Normal one-finger widget scrolling remains untouched.
+      .pointerInput(homeListState.firstVisibleItemIndex, homeListState.firstVisibleItemScrollOffset) {
         awaitEachGesture {
           val down = awaitFirstDown(
             requireUnconsumed = false,
             pass = PointerEventPass.Initial
           )
-          var lastY = down.position.y
-          var finished = false
-          while (!finished) {
+          val startedAtBottomEdge = down.position.y >= size.height * 0.68f
+          val startedAtHomeTop = homeListState.firstVisibleItemIndex == 0 &&
+            homeListState.firstVisibleItemScrollOffset == 0
+          var triggered = false
+
+          while (true) {
             val event = awaitPointerEvent(PointerEventPass.Initial)
-            val change = event.changes.firstOrNull()
-            if (change == null) {
-              finished = true
-            } else {
-              lastY = change.position.y
-              if (change.changedToUp()) {
-                if (lastY - down.position.y < -140f) {
-                  onSwipeUp()
-                }
-                finished = true
-              }
+            val change = event.changes.firstOrNull() ?: break
+            val dx = change.position.x - down.position.x
+            val dy = change.position.y - down.position.y
+
+            if (!triggered && startedAtBottomEdge && startedAtHomeTop &&
+                dy < -220f && abs(dy) > abs(dx) * 1.25f) {
+              change.consume()
+              triggered = true
+              onSwipeUp()
             }
+
+            if (event.changes.all { !it.pressed }) break
           }
         }
       }

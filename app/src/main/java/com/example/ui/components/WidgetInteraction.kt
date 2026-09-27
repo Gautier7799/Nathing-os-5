@@ -38,8 +38,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.consume
-import androidx.compose.ui.input.pointer.calculateZoom
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.unit.dp
@@ -48,6 +46,7 @@ import com.example.model.NosWidgetPortType
 import com.example.ui.theme.LocalLauncherTheme
 import com.example.ui.theme.NothingRed
 import kotlin.math.abs
+import kotlin.math.hypot
 
 private const val MIN_WIDGET_SCALE = 0.75f
 private const val MAX_WIDGET_SCALE = 1.5f
@@ -89,7 +88,20 @@ fun ScalableWidget(
 
             if (pressedCount >= 2) {
               resizing = true
-              val zoom = event.calculateZoom()
+              val pointers = event.changes.filter { it.pressed }.take(2)
+              val zoom = if (pointers.size == 2) {
+                val currentDistance = hypot(
+                  pointers[0].position.x - pointers[1].position.x,
+                  pointers[0].position.y - pointers[1].position.y
+                )
+                val previousDistance = hypot(
+                  pointers[0].previousPosition.x - pointers[1].previousPosition.x,
+                  pointers[0].previousPosition.y - pointers[1].previousPosition.y
+                )
+                if (previousDistance > 0.5f) currentDistance / previousDistance else 1f
+              } else {
+                1f
+              }
               if (abs(zoom - 1f) > 0.008f) {
                 val next = (gestureScale * zoom).coerceIn(MIN_WIDGET_SCALE, MAX_WIDGET_SCALE)
                 if (abs(next - gestureScale) > 0.001f) {

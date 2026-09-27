@@ -58,7 +58,6 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -442,7 +441,7 @@ fun AppDrawerSheet(
             AppIconItem(
               app = app,
               onClick = { onAppClick(app) },
-              onLongClick = { selectedAppForMenu = app },
+              onLongClick = { onOpenAppInfo(app) },
               iconSize = 56.dp,
               showLabel = true,
               iconPack = iconPack,

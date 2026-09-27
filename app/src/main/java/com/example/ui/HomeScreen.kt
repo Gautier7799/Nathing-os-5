@@ -216,6 +216,7 @@ fun HomeScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
+      .blur(if (isDrawerOpen) 12.dp else 0.dp)
       .background(theme.background)
       .testTag("home_screen_container")
   ) {

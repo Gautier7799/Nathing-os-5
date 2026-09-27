@@ -165,6 +165,34 @@ object SystemPortHelper {
     }
   }
 
+  // Google AI / Gemini search with Google Search fallback.
+  fun launchGoogleAiSearch(context: Context): Boolean {
+    val pm = context.packageManager
+    val geminiPackages = listOf(
+      "com.google.android.apps.bard",
+      "com.google.android.apps.googleassistant"
+    )
+    for (pkg in geminiPackages) {
+      try {
+        val launchIntent = pm.getLaunchIntentForPackage(pkg)
+        if (launchIntent != null) {
+          launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          context.startActivity(launchIntent)
+          return true
+        }
+      } catch (_: Exception) {}
+    }
+    return try {
+      val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=")).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+      context.startActivity(intent)
+      true
+    } catch (_: Exception) {
+      false
+    }
+  }
+
   // Package detection helper
   fun isAppInstalled(context: Context, packageName: String): Boolean {
     return try {

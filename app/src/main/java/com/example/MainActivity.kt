@@ -1,14 +1,18 @@
 package com.example
 
+import android.app.role.RoleManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.BackEventCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,7 +22,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,15 +51,17 @@ class MainActivity : ComponentActivity() {
 
   private val viewModel: LauncherViewModel by viewModels()
 
-  // Receiver to synchronize with system lock screen and prevent visual overlap
+  private val roleRequestLauncher =
+    registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+      // Android will call us again after the Home role dialog. No further action
+      // is required; the activity is already the Home entry point.
+    }
+
   private val keyguardReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-      if (intent?.action == Intent.ACTION_USER_PRESENT) {
-        if (viewModel.settings.value.lockScreen.isLockScreenEnabled) {
-          // The system keyguard has just been dismissed; keep the launcher's
-          // lock surface visible until the user explicitly unlocks it.
-          viewModel.lockLauncherScreen()
-        }
+      if (intent?.action == Intent.ACTION_USER_PRESENT &&
+          viewModel.settings.value.lockScreen.isLockScreenEnabled) {
+        viewModel.lockLauncherScreen()
       }
     }
   }
@@ -76,7 +81,7 @@ class MainActivity : ComponentActivity() {
           modifier = Modifier.fillMaxSize(),
           containerColor = theme.background,
           contentWindowInsets = WindowInsets(0, 0, 0, 0)
-        ) { _ ->
+        ) {
           NothingLauncherApp(
             viewModel = viewModel,
             settings = settings,
@@ -85,20 +90,31 @@ class MainActivity : ComponentActivity() {
         }
       }
     }
+
+    requestHomeRoleIfNeeded()
   }
 
   override fun onResume() {
     super.onResume()
-    // Do not auto-dismiss the custom lock screen here. onResume also runs when
-    // returning from another app; dismissing it here made the lock screen look
-    // inactive even when its required permissions were already granted.
+    // Re-check when returning from Settings/Home-role UI.
+    requestHomeRoleIfNeeded()
+  }
+
+  private fun requestHomeRoleIfNeeded() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+    val roleManager = getSystemService(RoleManager::class.java) ?: return
+    if (!roleManager.isRoleHeld(RoleManager.ROLE_HOME) &&
+        roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+      roleRequestLauncher.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME))
+    }
   }
 
   override fun onDestroy() {
-    super.onDestroy()
     try {
       unregisterReceiver(keyguardReceiver)
-    } catch (_: Exception) {}
+    } catch (_: Exception) {
+    }
+    super.onDestroy()
   }
 }
 
@@ -135,10 +151,10 @@ fun NothingLauncherApp(
     ACCENT_COLORS.getOrElse(settings.accentColorIndex) { ACCENT_COLORS[0] }
   }
 
-  // Handle hardware back press gracefully
-  BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER || currentScreen == LauncherScreen.LOCK_SCREEN || isSettingsOpen || activeFolder != null) {
+  BackHandler(enabled = currentScreen == LauncherScreen.APP_DRAWER ||
+      currentScreen == LauncherScreen.LOCK_SCREEN ||
+      isSettingsOpen || activeFolder != null) {
     if (currentScreen == LauncherScreen.LOCK_SCREEN) {
-      // Back never bypasses the custom lock screen.
     } else if (activeFolder != null) {
       viewModel.openFolder(null)
     } else if (isSettingsOpen) {
@@ -150,7 +166,6 @@ fun NothingLauncherApp(
   }
 
   Box(modifier = modifier.fillMaxSize()) {
-    // 1. Home Screen
     HomeScreen(
       currentTime = currentTime,
       currentDate = currentDate,
@@ -213,7 +228,6 @@ fun NothingLauncherApp(
       onWidgetInfo = { widgetType -> viewModel.openWidgetAppInfo(widgetType) }
     )
 
-    // 2. App Drawer Screen (Animated slide in/out)
     AnimatedVisibility(
       visible = currentScreen == LauncherScreen.APP_DRAWER,
       enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -242,14 +256,11 @@ fun NothingLauncherApp(
           }
           viewModel.updateSettings(settings.copy(themeMode = newTheme))
         },
-        onSelectIconPack = { pack ->
-          viewModel.updateSettings(settings.copy(iconPack = pack))
-        },
+        onSelectIconPack = { pack -> viewModel.updateSettings(settings.copy(iconPack = pack)) },
         onOpenSettings = { isSettingsOpen = true }
       )
     }
 
-    // 3. Expanded Folder Dialog
     activeFolder?.let { folder ->
       ExpandedFolderSheet(
         folder = folder,
@@ -261,8 +272,6 @@ fun NothingLauncherApp(
       )
     }
 
-    // Compose app options sheet: long-pressing an icon opens this menu with
-    // Open / Pin / Dock / App Info actions instead of the old floating context menu.
     selectedAppForOptions?.let { app ->
       AppOptionsSheet(
         app = app,
@@ -277,7 +286,6 @@ fun NothingLauncherApp(
       )
     }
 
-    // 4. Launcher Settings Dialog
     if (isSettingsOpen) {
       LauncherSettingsDialog(
         settings = settings,
@@ -290,7 +298,6 @@ fun NothingLauncherApp(
       )
     }
 
-    // 5. Quick Memo Edit Dialog
     if (isEditingNote) {
       EditNoteDialog(
         initialNote = quickNote,
@@ -300,11 +307,11 @@ fun NothingLauncherApp(
       )
     }
 
-    // 6. Signature Nothing OS 5 Lock Screen
     AnimatedVisibility(
       visible = currentScreen == LauncherScreen.LOCK_SCREEN,
       enter = fadeIn(androidx.compose.animation.core.tween(300)),
-      exit = fadeOut(androidx.compose.animation.core.tween(250)) + slideOutVertically(targetOffsetY = { -it / 3 })
+      exit = fadeOut(androidx.compose.animation.core.tween(250)) +
+          slideOutVertically(targetOffsetY = { -it / 3 })
     ) {
       NothingLockScreen(
         currentTime = currentTime,
@@ -316,8 +323,8 @@ fun NothingLauncherApp(
         settings = settings,
         onUnlock = { viewModel.unlockLauncherScreen() },
         onToggleTorch = { viewModel.toggleTorch() },
-        onLaunchShortcut = { shortcut: LockShortcutType -> viewModel.launchShortcut(shortcut) },
-        onDismissNotification = { id: String -> viewModel.dismissNotification(id) }
+        onLaunchShortcut = { shortcut -> viewModel.launchShortcut(shortcut) },
+        onDismissNotification = { id -> viewModel.dismissNotification(id) }
       )
     }
   }

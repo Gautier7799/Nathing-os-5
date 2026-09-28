@@ -162,20 +162,13 @@ data class LauncherSettings(
   val customLockScreenWallpaperUri: String? = null,
   val wallpaperDimPct: Int = 30, // 0% to 70% dim overlay for icon clarity
   val lockScreen: LockScreenSettings = LockScreenSettings(),
+  // Clean Nothing-style Home defaults: the launcher surface stays focused,
+  // while the full widget collection remains available from the Widgets port.
   val activeWidgets: List<NosWidgetPortType> = listOf(
     NosWidgetPortType.CALENDAR_DIGITAL_TIME,
-    NosWidgetPortType.MINI_CLUSTER_2X2,
-    NosWidgetPortType.GLANCE_TEXT_SUMMARY,
-    NosWidgetPortType.CIRCULAR_GAUGES,
-    NosWidgetPortType.DECIBEL_SOUND_METER,
-    NosWidgetPortType.QUICK_CHECKLIST,
-    NosWidgetPortType.CONTACT_PILL,
     NosWidgetPortType.CLOCK_MAIN,
     NosWidgetPortType.WEATHER_MAIN,
-    NosWidgetPortType.CASSETTE_PLAYER,
-    NosWidgetPortType.PEDOMETER_GAUGE,
-    NosWidgetPortType.GIANT_CIRCLES_CLUSTER,
-    NosWidgetPortType.STICKER_FOCUS_CLUSTER,
-    NosWidgetPortType.NOTHING_X_EARBUDS
+    NosWidgetPortType.GLANCE_TEXT_SUMMARY,
+    NosWidgetPortType.QUICK_CHECKLIST
   )
 )

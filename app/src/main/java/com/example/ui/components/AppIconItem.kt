@@ -133,7 +133,8 @@ fun AppIconItem(
   iconSize: Dp = 54.dp,
   showLabel: Boolean = true,
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
-  accentColor: Color = NothingRed
+  accentColor: Color = NothingRed,
+  drawerStyle: Boolean = false
 ) {
   val theme = LocalLauncherTheme.current
   val isDark = theme.isDark
@@ -141,6 +142,58 @@ fun AppIconItem(
 
   val pastelBg = remember(app.label) {
     PASTEL_COLOUR_BADGE_PALETTE[abs(app.label.hashCode()) % PASTEL_COLOUR_BADGE_PALETTE.size]
+  }
+
+  if (drawerStyle) {
+    Column(
+      modifier = modifier
+        .combinedClickable(
+          onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onClick()
+          },
+          onLongClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onLongClick?.invoke()
+          }
+        )
+        .padding(2.dp)
+        .testTag("app_item_${app.packageName}"),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
+        if (app.icon != null) {
+          val bitmap = remember(app.icon) { drawableToBitmap(app.icon, applyGrayscale = false, isDark = false) }
+          Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = app.label,
+            modifier = Modifier.size(iconSize * 0.78f)
+          )
+        } else {
+          Icon(
+            imageVector = getIconVectorForApp(app.label),
+            contentDescription = app.label,
+            tint = theme.textPrimary,
+            modifier = Modifier.size(iconSize * 0.62f)
+          )
+        }
+        Box(modifier = Modifier.align(Alignment.TopEnd)) {
+          AppBadges(app = app, accentColor = accentColor, isDark = isDark)
+        }
+      }
+      Spacer(modifier = Modifier.height(3.dp))
+      Text(
+        text = app.label,
+        color = theme.textPrimary,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        fontFamily = FontFamily.Default,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center
+      )
+    }
+    return
   }
 
   Column(

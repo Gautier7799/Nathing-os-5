@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -102,13 +101,7 @@ fun AppDrawerSheet(
     }
   }
 
-  // Top suggested / recent apps for the upper tray (Screenshot 2)
-  val suggestedApps = remember(apps) {
-    apps.filter {
-      it.label in listOf("Play Store", "Telegram X", "Amazon", "Calendar", "Chrome", "Camera", "Messages", "Nothing X")
-    }.take(4).ifEmpty { apps.take(4) }
-  }
-
+  // Drawer uses the full app list directly; no extra tray.
   // Available Alphabet headers for fast scroll
   val alphabetLetters = remember(apps) {
     apps.mapNotNull { it.label.firstOrNull()?.uppercaseChar() }
@@ -128,13 +121,13 @@ fun AppDrawerSheet(
         .fillMaxSize()
         .statusBarsPadding()
         .navigationBarsPadding()
-        .padding(top = 10.dp, start = 16.dp, end = 16.dp)
+        .padding(top = 10.dp, start = 12.dp, end = 12.dp)
     ) {
       // Top Bar: Back button + Search Box + 3-Dot Overflow Menu (Screenshot 1 & 2)
       Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
       ) {
         IconButton(
           onClick = onClose,
@@ -356,52 +349,12 @@ fun AppDrawerSheet(
 
       Spacer(modifier = Modifier.height(14.dp))
 
-      // Upper Tray: Recents/Favorites row separated by a subtle divider (Screenshot 2)
-      if (searchQuery.isEmpty() && suggestedApps.isNotEmpty()) {
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-          horizontalArrangement = Arrangement.SpaceAround,
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          suggestedApps.forEach { app ->
-            AppIconItem(
-              app = app,
-              onClick = { onAppClick(app) },
-              onLongClick = { onOpenAppInfo(app) },
-              iconSize = 52.dp,
-              showLabel = true,
-              iconPack = iconPack,
-              accentColor = accentColor,
-              modifier = Modifier.weight(1f)
-            )
-          }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Subtle divider separating recents from the alphabetized app list (Screenshot 2)
-        Box(
-          modifier = Modifier.fillMaxWidth(),
-          contentAlignment = Alignment.Center
-        ) {
-          HorizontalDivider(
-            modifier = Modifier.width(60.dp),
-            thickness = 2.dp,
-            color = theme.border.copy(alpha = 0.5f)
-          )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-      }
-
       // Drawer Content: Grid + Fast-Scroll Alphabet Sidebar
       Row(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
-          columns = GridCells.Fixed(4),
+          columns = GridCells.Fixed(5),
           state = gridState,
-          verticalArrangement = Arrangement.spacedBy(16.dp),
+          verticalArrangement = Arrangement.spacedBy(20.dp),
           horizontalArrangement = Arrangement.spacedBy(8.dp),
           modifier = Modifier
             .weight(1f)
@@ -416,6 +369,7 @@ fun AppDrawerSheet(
               iconSize = 56.dp,
               showLabel = true,
               iconPack = iconPack,
+              drawerStyle = true,
               accentColor = accentColor
             )
           }

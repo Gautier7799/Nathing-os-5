@@ -16,4 +16,42 @@
  
      val enableWallpaperBlur = BoolPref("pref_enableWallpaperBlur", false, recreate)
      val wallpaperBlur = IntPref("pref_wallpaperBlur", 25, recreate)
-     val wallpaperBlurFactorThreshold = FloatPref("pref_wallpaperBlurFactor", 3.0F, recreate)
+@@ -229,12 +229,18 @@
+                     hotseatColumns.set(gridState.hotseatCount)
+                 }
+             }
++            // Apply the Nothing-style dock preset once when upgrading existing v2 installs.
++            // This makes the visual change appear even when the old build had saved the dock off.
++            if (oldVersion in 2 until 3) {
++                hotseatBG.set(true)
++                hotseatBGAlpha.set(68)
++            }
+         }
+         normalizeVibrationFeedbackLevel()
+     }
+ 
+     companion object {
+-        private const val CURRENT_VERSION = 2
++        private const val CURRENT_VERSION = 3
+ 
+         @JvmField
+         val INSTANCE = DaggerSingletonObject(LauncherAppComponent::getPreferenceManager)
+--- lawnchair-16-dev/build.gradle
++++ lawnchair-16-dev/build.gradle
+@@ -139,7 +139,7 @@
+         || ciRef.endsWith("-stable"))
+ final def devReleaseName = ciBuild ? "Dev.(#${ciRunNumber})" : "Dev.(${buildCommit})"
+
+-final def version = "16"
++final def version = "16.1-Nothing"
+ final def releaseName = "Beta 1"
+ final def versionDisplayName = "${version}.${isReleaseBuild ? releaseName : devReleaseName}"
+ final def majorVersion = versionDisplayName.split("\\.")[0]
+@@ -154,7 +154,7 @@
+          * Lawnchair Launcher 16.0 Beta 1.0
+          * see https://docs.lawnchair.app/developers/standards/development-workflow#versioning-scheme
+          */
+-        versionCode 16_00_02_01_00
++        versionCode 16_00_02_01_01
+         versionName "${versionDisplayName}"
+         buildConfigField "String", "VERSION_DISPLAY_NAME", "\"\${versionDisplayName}\""

@@ -1,13 +1,11 @@
 # GitHub upload manifest — Lawnchair 16 / Nothing OS
 
-This manifest describes the source patch preparation uploaded to `patches/lawnchair16/` on branch `work/lawnchair16-dock-patch-2026-10-25`.
+The source patch and updated documentation are stored under `patches/lawnchair16/` on branch `work/lawnchair16-dock-patch-2026-10-25`.
 
-## Included in the repository
-- `patches/lawnchair16/README.md` — patch application and validation instructions.
-- `patches/lawnchair16/MERGE_QUEUE.md` — remaining work and safety constraints.
-- `patches/lawnchair16/lawnchair16-nothing-batch.patch` — unified source patch.
-- `patches/lawnchair16/SHA256SUMS.txt` — expected checksums for the prepared package files.
+## Repository files
+- `patches/lawnchair16/README.md` — patch instructions, known base functionality and limitations.
+- `patches/lawnchair16/MERGE_QUEUE.md` — remaining implementation work and user constraints.
+- `patches/lawnchair16/lawnchair16-nothing-batch.patch` — unified source patch for dock background defaults.
+- `patches/lawnchair16/SHA256SUMS.txt` — checksums for the prepared ZIP's source/docs files.
 
-The complete local preparation ZIP also contains full modified Kotlin source copies. The ZIP itself is not uploaded as a binary asset by this text-file upload route. This package does not include theme artwork and is not an APK.
-
-Do not merge these changes into `main` until the source patch is checked against the exact source tree and build/device tests pass.
+The companion ZIP contains full modified-source copies. The ZIP binary itself is not attached to this repository by the text-file upload route. The App info shortcut and swipe-up drawer gesture already exist in the base source, so no duplicate App info code is included. This is not an APK; no Lawnchair Gradle build/device test is claimed here. Keep the PR in draft until the remaining visual work is implemented and tested.

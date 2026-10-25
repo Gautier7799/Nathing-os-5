@@ -58,7 +58,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -221,7 +220,6 @@ fun HomeScreen(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .blur(if (isDrawerOpen) 18.dp else 0.dp)
       .background(theme.background)
       .testTag("home_screen_container")
   ) {
@@ -640,7 +638,7 @@ fun HomeScreen(
         iconPack = settings.iconPack,
         accentColor = accentColor,
         // Search dock is intentionally removed from the launcher surface.
-          showSearchBar = true
+          showSearchBar = false
         )
       }
     }

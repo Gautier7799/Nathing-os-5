@@ -268,6 +268,7 @@ fun NothingLauncherApp(
         folder = folder,
         onDismiss = { viewModel.openFolder(null) },
         onAppClick = { app -> viewModel.launchApp(app) },
+        onOpenAppInfo = { app -> selectedAppForOptions = app },
         onToggleEnlarged = { viewModel.toggleFolderEnlarged(folder.id) },
         iconPack = settings.iconPack,
         accentColor = accentColor

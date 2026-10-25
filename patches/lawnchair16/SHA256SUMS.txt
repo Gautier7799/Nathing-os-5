@@ -1,0 +1,3 @@
+# SHA-256 checksums for the source patch and separately supplied full source archive
+73c12978418b8486a0f1942e0d11e78028f459ea23169a1426deafc1e39e93bd  lawnchair16-nothing-batch.patch
+df9e6a716d21e186c448459d14c21848286df885fbfc5f437446777ca7ea57fb  Lawnchair-16-Nothing-Integrated-Source-v1.3.zip

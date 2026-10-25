@@ -1,16 +1,18 @@
-# Merge queue — next batch after current build succeeds
+# Merge queue — next batch after the successful build checkpoint
 
-## Safe to verify from source now
-- [x] Dock background default and alpha adjustment prepared.
-- [x] App info shortcut explicitly present in long-press actions.
-- [x] Confirm base Lawnchair 16 has swipe-up-to-open-drawer handler and default config.
+## Prepared / source-checked
+- [x] Dock/Hotseat background default enabled and alpha set to 68%.
+- [x] Confirmed swipe-up-to-open-drawer is already implemented and the default action is `OpenAppDrawer`.
+- [x] Confirmed `App info` is already inherited from Launcher3's `super.getSupportedShortcuts`; do not add a duplicate action.
+- [x] Confirmed the all-apps hotseat button feature flag defaults to disabled in this source.
+- [x] Patch dry-run passed against the original source file extracted from `lawnchair-16-dev.zip`.
 
-## Next implementation batch (do not guess)
-- [ ] Inspect the white dock line and determine whether it is drawn by Lawnchair or Android's system gesture/navigation bar. Do not hide or disable the system navigation affordance globally.
-- [ ] Inspect the default workspace layout and the supplied reference APK to identify the exact app-drawer icon/marked Nothing icons; remove only the intended launcher UI elements and preserve gesture access.
-- [ ] Implement genuine dock backdrop blur only if supported safely on the target Android/API path; otherwise keep a clearly labeled translucent fallback.
-- [ ] Integrate the original theme plus the two requested themes after the two screenshot designs/assets are available in the active project context. Do not invent the theme artwork or silently delete theme code before identifying its consumers.
-- [ ] Re-test touch, swipe-up, horizontal dock paging, app long-press, app info, launcher startup and settings persistence.
+## Next implementation batch (requires exact visual reference)
+- [ ] Identify whether the white line is drawn by Lawnchair or Android system gesture navigation before changing it; do not disable the system navigation affordance globally.
+- [ ] Inspect the supplied reference APK/screenshots to identify the exact app-drawer/marked Nothing icons; remove only the intended launcher UI elements and preserve swipe-up access.
+- [ ] Implement genuine dock backdrop blur only if supported safely on the target Android/API path; otherwise retain a clearly labeled translucent fallback.
+- [ ] Add the original theme and the two requested themes once their exact screenshots/assets are available in the active working files.
+- [ ] Run patch dry-run, build, startup, touch/gesture, long-press/App info, and settings-persistence checks.
 
 ## User constraints
-Preserve existing Lawnchair functions and smoothness. Do not change unrelated behavior without asking. Do not call the batch complete until build/device checks are performed.
+Preserve existing Lawnchair functionality and smoothness. Do not change unrelated behavior without approval. Do not call the next batch complete until build/device checks are performed.

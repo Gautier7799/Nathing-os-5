@@ -1,7 +1,6 @@
 --- lawnchair-16-dev/lawnchair/src/app/lawnchair/preferences/PreferenceManager.kt
 +++ lawnchair-16-dev/lawnchair/src/app/lawnchair/preferences/PreferenceManager.kt
-@@ -168,15 +168,15 @@
- 
+@@ -169,13 +169,13 @@
      val hotseatQsbCornerRadius = FloatPref("pref_hotseatQsbCornerRadius", 1F, recreate)
      val hotseatQsbAlpha = IntPref("pref_searchHotseatTranparency", 100, recreate)
      val hotseatQsbStrokeWidth = FloatPref("pref_searchStrokeWidth", 0F, recreate)
@@ -18,16 +17,3 @@
      val enableWallpaperBlur = BoolPref("pref_enableWallpaperBlur", false, recreate)
      val wallpaperBlur = IntPref("pref_wallpaperBlur", 25, recreate)
      val wallpaperBlurFactorThreshold = FloatPref("pref_wallpaperBlurFactor", 3.0F, recreate)
---- lawnchair-16-dev/lawnchair/src/app/lawnchair/LawnchairLauncher.kt
-+++ lawnchair-16-dev/lawnchair/src/app/lawnchair/LawnchairLauncher.kt
-@@ -281,9 +281,10 @@
- 
-     override fun getSupportedShortcuts(container: Int): Stream<SystemShortcut.Factory<*>> = Stream.concat(
-         super.getSupportedShortcuts(container),
-         Stream.concat(
--            Stream.of(LawnchairShortcut.UNINSTALL, LawnchairShortcut.CUSTOMIZE, LawnchairShortcut.OPEN_IN_STORE),
-+            // Keep Android's standard App info action available from the long-press menu.
-+            Stream.of(SystemShortcut.APP_INFO, LawnchairShortcut.UNINSTALL, LawnchairShortcut.CUSTOMIZE, LawnchairShortcut.OPEN_IN_STORE),
-             if (LawnchairApp.isRecentsEnabled) Stream.of(LawnchairShortcut.PAUSE_APPS) else Stream.empty(),
-         ),
-     )

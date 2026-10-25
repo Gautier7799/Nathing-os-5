@@ -10,9 +10,21 @@
      val hotseatBGVerticalInsetTop = IntPref("pref_hotseatBGVRinsetTop", 0, recreate)
      val hotseatBGHorizontalInsetRight = IntPref("pref_hotseatBGHRinsetRight", 0, recreate)
      val hotseatBGVerticalInsetBottom = IntPref("pref_hotseatBGVRinsetBottom", 0, recreate)
-
+ 
 -    val hotseatBGAlpha = IntPref("pref_hotseatBGTransparency", 100, recreate)
 +    val hotseatBGAlpha = IntPref("pref_hotseatBGTransparency", 68, recreate)
-
+ 
      val enableWallpaperBlur = BoolPref("pref_enableWallpaperBlur", false, recreate)
      val wallpaperBlur = IntPref("pref_wallpaperBlur", 25, recreate)
+--- lawnchair-16-dev/lawnchair/src/app/lawnchair/LawnchairLauncher.kt
++++ lawnchair-16-dev/lawnchair/src/app/lawnchair/LawnchairLauncher.kt
+@@ -282,7 +282,8 @@
+     override fun getSupportedShortcuts(container: Int): Stream<SystemShortcut.Factory<*>> = Stream.concat(
+         super.getSupportedShortcuts(container),
+         Stream.concat(
+-            Stream.of(LawnchairShortcut.UNINSTALL, LawnchairShortcut.CUSTOMIZE, LawnchairShortcut.OPEN_IN_STORE),
++            // Keep Android's standard App info action available from the long-press menu.
++            Stream.of(SystemShortcut.APP_INFO, LawnchairShortcut.UNINSTALL, LawnchairShortcut.CUSTOMIZE, LawnchairShortcut.OPEN_IN_STORE),
+             if (LawnchairApp.isRecentsEnabled) Stream.of(LawnchairShortcut.PAUSE_APPS) else Stream.empty(),
+         ),
+     )

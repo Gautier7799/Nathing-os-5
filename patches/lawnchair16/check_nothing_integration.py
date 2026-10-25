@@ -17,6 +17,9 @@ checks = [
     ("swipe-up opens app drawer", "defaultValue = GestureHandlerConfig.OpenAppDrawer", ROOT / "lawnchair/src/app/lawnchair/preferences2/PreferenceManager2.kt"),
     ("inherited app info shortcut", "APP_INFO, WellbeingModel.SHORTCUT_FACTORY", ROOT / "quickstep/src/com/android/launcher3/uioverrides/QuickstepLauncher.java"),
     ("hotseat app drawer button disabled by default", "public boolean enableAllAppsButtonInHotseat() {\n        return false;", ROOT / "flags/src/com/android/launcher3/FeatureFlagsImpl.java"),
+    ("dock background is applied to the Hotseat view", "setBackground(bg);", ROOT / "src/com/android/launcher3/Hotseat.java"),
+    ("dock background keeps rounded corners and insets", "new InsetDrawable(background,", ROOT / "src/com/android/launcher3/Hotseat.java"),
+    ("no duplicate App info shortcut in Lawnchair override", "SystemShortcut.APP_INFO", ROOT / "lawnchair/src/app/lawnchair/LawnchairLauncher.kt"),
 ]
 failed = []
 for label, needle, path in checks:
@@ -25,8 +28,14 @@ for label, needle, path in checks:
     except OSError as exc:
         failed.append((label, f"cannot read {path.relative_to(ROOT)}: {exc}"))
         continue
-    if needle not in content:
-        failed.append((label, f"expected source marker missing in {path.relative_to(ROOT)}"))
+    if label == "no duplicate App info shortcut in Lawnchair override":
+        passed = needle not in content
+        expectation = "unexpected duplicate App info shortcut marker found"
+    else:
+        passed = needle in content
+        expectation = "expected source marker missing"
+    if not passed:
+        failed.append((label, f"{expectation} in {path.relative_to(ROOT)}"))
     else:
         print(f"PASS: {label}")
 if failed:

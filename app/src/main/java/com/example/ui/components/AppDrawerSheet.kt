@@ -92,13 +92,23 @@ fun AppDrawerSheet(
   val gridState = rememberLazyGridState()
   val scope = rememberCoroutineScope()
 
+  // Keep drawer ordering deterministic and allow search by both visible label
+  // and package name, as expected from a full launcher app drawer.
   val filteredApps by remember(apps, searchQuery) {
     derivedStateOf {
-      if (searchQuery.isBlank()) {
+      val query = searchQuery.trim()
+      val matchingApps = if (query.isBlank()) {
         apps
       } else {
-        apps.filter { it.label.contains(searchQuery.trim(), ignoreCase = true) }
+        apps.filter { app ->
+          app.label.contains(query, ignoreCase = true) ||
+            app.packageName.contains(query, ignoreCase = true)
+        }
       }
+      matchingApps.sortedWith(
+        compareBy<AppItem> { it.label.lowercase(Locale.ROOT) }
+          .thenBy { it.packageName.lowercase(Locale.ROOT) }
+      )
     }
   }
 

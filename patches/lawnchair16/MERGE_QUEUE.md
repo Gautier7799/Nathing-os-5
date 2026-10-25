@@ -1,16 +1,16 @@
 # Merge queue — next batch after current build succeeds
 
-## Prepared and source-checked
-- Dock/Hotseat background default enabled, alpha 68%.
-- Android App info action explicitly included in app long-press shortcuts.
-- Base Lawnchair source already contains swipe-up-to-open-drawer handling and defaults.
+## Safe to verify from source now
+- [x] Dock background default and alpha adjustment prepared.
+- [x] App info shortcut explicitly present in long-press actions.
+- [x] Confirm base Lawnchair 16 has swipe-up-to-open-drawer handler and default config.
 
-## Next implementation batch
-- Identify whether the white line belongs to Lawnchair or Android system navigation before changing it.
-- Inspect workspace defaults and reference APK to identify the exact app-drawer/marked Nothing icons; remove only those intended UI elements while preserving swipe-up access.
-- Implement real-time dock backdrop blur only if safe on the target Android/API path; otherwise retain a clearly labeled translucent fallback.
-- Add the original theme and the two requested themes after their exact screenshots/assets are available; do not fabricate theme artwork.
-- Re-test startup, touch, vertical/horizontal gestures, long-press, App info, and settings persistence.
+## Next implementation batch (do not guess)
+- [ ] Inspect the white dock line and determine whether it is drawn by Lawnchair or Android's system gesture/navigation bar. Do not hide or disable the system navigation affordance globally.
+- [ ] Inspect the default workspace layout and the supplied reference APK to identify the exact app-drawer icon/marked Nothing icons; remove only the intended launcher UI elements and preserve gesture access.
+- [ ] Implement genuine dock backdrop blur only if supported safely on the target Android/API path; otherwise keep a clearly labeled translucent fallback.
+- [ ] Integrate the original theme plus the two requested themes after the two screenshot designs/assets are available in the active project context. Do not invent the theme artwork or silently delete theme code before identifying its consumers.
+- [ ] Re-test touch, swipe-up, horizontal dock paging, app long-press, app info, launcher startup and settings persistence.
 
-## Constraints
-Preserve existing Lawnchair functionality and smoothness. Do not alter unrelated behavior without approval. This queue is preparation, not a claim that these future items are implemented or tested.
+## User constraints
+Preserve existing Lawnchair functions and smoothness. Do not change unrelated behavior without asking. Do not call the batch complete until build/device checks are performed.

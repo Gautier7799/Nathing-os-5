@@ -58,6 +58,7 @@ import com.example.ui.theme.NothingWhite
 fun EnlargedFolderView(
   folder: FolderItem,
   onAppClick: (AppItem) -> Unit,
+  onOpenAppInfo: (AppItem) -> Unit = {},
   onOpenFolderSheet: () -> Unit,
   onToggleEnlarged: () -> Unit,
   modifier: Modifier = Modifier,
@@ -128,6 +129,7 @@ fun EnlargedFolderView(
               AppIconItem(
                 app = app,
                 onClick = { onAppClick(app) },
+                onLongClick = { onOpenAppInfo(app) },
                 iconSize = 44.dp,
                 showLabel = false,
                 iconPack = iconPack,
@@ -232,6 +234,7 @@ fun ExpandedFolderSheet(
   folder: FolderItem,
   onDismiss: () -> Unit,
   onAppClick: (AppItem) -> Unit,
+  onOpenAppInfo: (AppItem) -> Unit = {},
   onToggleEnlarged: () -> Unit,
   iconPack: IconPackStyle = IconPackStyle.MONOCHROME,
   accentColor: Color = NothingRed
@@ -306,6 +309,7 @@ fun ExpandedFolderSheet(
               onAppClick(app)
               onDismiss()
             },
+            onLongClick = { onOpenAppInfo(app) },
             iconSize = 54.dp,
             showLabel = true,
             iconPack = iconPack,

@@ -59,8 +59,7 @@ fun NothingDock(
   Column(
     modifier = modifier
       .fillMaxWidth()
-      .padding(horizontal = 16.dp, vertical = 8.dp)
-,
+      .padding(horizontal = 16.dp, vertical = 8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     // Dock Icons Row (Image 2: Dark / Image 3: Frosted White Capsule)

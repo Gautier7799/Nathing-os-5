@@ -13,6 +13,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +66,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -221,6 +224,31 @@ fun HomeScreen(
     modifier = modifier
       .fillMaxSize()
       .background(theme.background)
+      // A single bottom-origin swipe recognizer keeps the app-drawer gesture
+      // available even when the dock auto-hides during widget scrolling.
+      .pointerInput(onSwipeUp) {
+        awaitEachGesture {
+          val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
+          )
+          val startY = down.position.y
+          var triggered = false
+          while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull() ?: break
+            val dy = change.position.y - down.position.y
+            val dx = change.position.x - down.position.x
+            if (!triggered && startY >= size.height * 0.60f &&
+                dy < -96f && abs(dy) > abs(dx) * 1.25f) {
+              change.consume()
+              triggered = true
+              onSwipeUp()
+            }
+            if (event.changes.all { !it.pressed }) break
+          }
+        }
+      }
       .testTag("home_screen_container")
   ) {
     // Dynamic Nothing OS 5 Wallpaper Background (Supports built-in & custom gallery photos)

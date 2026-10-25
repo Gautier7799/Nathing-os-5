@@ -639,6 +639,7 @@ fun HomeScreen(
               EnlargedFolderView(
                 folder = folder,
                 onAppClick = onAppClick,
+                onOpenAppInfo = onOpenAppInfo,
                 onOpenFolderSheet = { onOpenFolder(folder) },
                 onToggleEnlarged = { onToggleFolderEnlarged(folder.id) },
                 iconPack = settings.iconPack,

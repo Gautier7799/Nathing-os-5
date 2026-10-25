@@ -372,7 +372,7 @@ fun AppDrawerSheet(
             .fillMaxSize()
             .testTag("app_drawer_grid")
         ) {
-          items(filteredApps, key = { it.packageName }) { app ->
+          items(filteredApps, key = { "${it.packageName}/${it.activityName}" }) { app ->
             AppIconItem(
               app = app,
               onClick = { onAppClick(app) },

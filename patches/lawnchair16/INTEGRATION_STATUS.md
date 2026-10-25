@@ -30,7 +30,9 @@ Dock styling, search widget, drawer layout/search/suggestions, hidden apps, grid
 - Source archive ZIP integrity check passed for v1.2.
 - The patch was previously dry-run checked against the source baseline.
 - Static source inspection confirms the defaults and migration noted above, and confirms the inherited `APP_INFO` shortcut and swipe-up drawer default.
-- Build attempt was blocked before Gradle configuration by network/DNS failure while downloading Gradle 9.8.2; no build/test success is claimed.
+- The lightweight source sanity script passed all 8 checks.
+- The repository's current GitHub Actions workflow builds its existing `app/` prototype; because the full Lawnchair source tree is not committed in that repository, that CI run does not validate this external Lawnchair source patch.
+- The local Lawnchair build attempt was blocked before Gradle configuration by network/DNS failure while downloading Gradle 9.8.2; no Lawnchair build/test success is claimed.
 
 ## Next sequence
 1. Reconcile the exact screenshot targets and theme artwork against the source resources.

@@ -95,7 +95,10 @@ class MainActivity : ComponentActivity() {
 
   override fun onResume() {
     super.onResume()
-    // Re-check when returning from Settings/Home-role UI.
+    // Refresh the app catalogue when returning from app info, installs, or
+    // system settings. The ViewModel preserves the user's pinned apps, Dock,
+    // and folder layout while reconciling package changes.
+    viewModel.refreshInstalledApps()
     requestHomeRoleIfNeeded()
   }
 

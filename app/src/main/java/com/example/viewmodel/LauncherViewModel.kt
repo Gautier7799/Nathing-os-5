@@ -650,6 +650,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
   }
 
+  fun refreshInstalledApps() = loadInstalledApps()
+
   private fun loadInstalledApps() {
     viewModelScope.launch {
       try {
@@ -689,28 +691,44 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
           fallbackApps
         }
 
+        // Refresh the installed-app catalogue without discarding the user's
+        // existing Home, Dock, or folder choices.
+        val previousPinned = _pinnedApps.value.map { it.packageName }
+        val previousDock = _dockApps.value.map { it.packageName }
+        val previousFolders = _folders.value
+        val appsByPackage = allApps.associateBy { it.packageName }
         _installedApps.value = allApps
 
-        // Set default Dock Apps
-        val dockList = allApps.filter { app ->
+        val defaultDock = allApps.filter { app ->
           app.label in listOf("Phone", "Messages", "Camera", "Chrome", "Browser")
-        }.take(4).ifEmpty {
-          allApps.take(4)
+        }.take(4).ifEmpty { allApps.take(4) }
+        val dockList = if (previousDock.isEmpty()) {
+          defaultDock
+        } else {
+          previousDock.mapNotNull { appsByPackage[it] }
         }
         _dockApps.value = dockList
 
-        // Set default Pinned Apps on Home
-        val pinned = allApps.filterNot { it in dockList }.take(6)
+        val pinned = if (previousPinned.isEmpty()) {
+          allApps.filterNot { it.packageName in dockList.map(AppItem::packageName) }.take(6)
+        } else {
+          previousPinned.mapNotNull { appsByPackage[it] }
+            .filterNot { app -> dockList.any { it.packageName == app.packageName } }
+        }
         _pinnedApps.value = pinned
 
-        // Create default Nothing OS signature folders
-        val mediaApps = allApps.filter { it.category == "Media" || it.label in listOf("Camera", "Photos", "Gallery", "Music", "YouTube") }.take(4)
-        val toolApps = allApps.filter { it.category == "Tools" || it.label in listOf("Settings", "Clock", "Calculator", "Files", "Notes") }.take(4)
-
-        _folders.value = listOf(
-          FolderItem(id = "folder_media", name = "MEDIA", isEnlarged = true, apps = mediaApps.ifEmpty { allApps.take(4) }),
-          FolderItem(id = "folder_tools", name = "TOOLS", isEnlarged = true, apps = toolApps.ifEmpty { allApps.drop(4).take(4) })
-        )
+        if (previousFolders.isEmpty()) {
+          val mediaApps = allApps.filter { it.category == "Media" || it.label in listOf("Camera", "Photos", "Gallery", "Music", "YouTube") }.take(4)
+          val toolApps = allApps.filter { it.category == "Tools" || it.label in listOf("Settings", "Clock", "Calculator", "Files", "Notes") }.take(4)
+          _folders.value = listOf(
+            FolderItem(id = "folder_media", name = "MEDIA", isEnlarged = true, apps = mediaApps.ifEmpty { allApps.take(4) }),
+            FolderItem(id = "folder_tools", name = "TOOLS", isEnlarged = true, apps = toolApps.ifEmpty { allApps.drop(4).take(4) })
+          )
+        } else {
+          _folders.value = previousFolders.map { folder ->
+            folder.copy(apps = folder.apps.mapNotNull { appsByPackage[it.packageName] })
+          }
+        }
       } catch (e: Exception) {
         _installedApps.value = getFallbackApps()
       }

@@ -36,6 +36,8 @@ object LauncherSettingsStore {
         swipeDownNotifications = o.optBoolean("swipeDownNotifications", defaults.swipeDownNotifications),
         showSearchBarOnDock = o.optBoolean("showSearchBarOnDock", defaults.showSearchBarOnDock),
         hapticFeedbackEnabled = o.optBoolean("hapticFeedbackEnabled", defaults.hapticFeedbackEnabled),
+        // Restore per-widget scale values that are already persisted by save().
+        widgetScales = loadWidgetScales(o),
         wallpaperIndex = o.optInt("wallpaperIndex", defaults.wallpaperIndex),
         customWallpaperUri = o.optString("customWallpaperUri", null),
         lockScreenWallpaperIndex = o.optInt("lockScreenWallpaperIndex", defaults.lockScreenWallpaperIndex),

@@ -680,15 +680,13 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
           )
         }.sortedBy { it.label.lowercase(Locale.ROOT) }
 
-        // If real device has apps, use them; also ensure essential fallback apps exist
-        val fallbackApps = getFallbackApps()
+        // Only show launchable activities actually discovered on this device.
+        // Synthetic fallback entries are used only if package discovery fails or
+        // returns nothing; merging them into a real catalogue creates phantom apps.
         val allApps = if (loadedList.isNotEmpty()) {
-          // Merge fallback essentials if missing
-          val existingPkgs = loadedList.map { it.packageName }.toSet()
-          val missingEssentials = fallbackApps.filterNot { it.packageName in existingPkgs }
-          (loadedList + missingEssentials).sortedBy { it.label.lowercase(Locale.ROOT) }
+          loadedList
         } else {
-          fallbackApps
+          getFallbackApps()
         }
 
         // Refresh the installed-app catalogue without discarding the user's

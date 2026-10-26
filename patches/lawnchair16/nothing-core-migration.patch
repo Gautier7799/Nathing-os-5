@@ -101,10 +101,6 @@
      <color name="light_drawer_text_color">#DE000000</color>
 --- a/lawnchair/AndroidManifest.xml
 +++ b/lawnchair/AndroidManifest.xml
-@@ -43,5 +43,5 @@
-     <!-- Support non-cellular enabled devices -->
-     <uses-feature android:name="android.hardware.telephony" android:required="false" />
- 
-     <!--override minSdk declared in it-->
+@@ -47 +47 @@
 -    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk" />
 +    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk,com.kieronquinn.app.smartspacer.sdk.client" />

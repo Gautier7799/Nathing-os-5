@@ -40,18 +40,6 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Install Android 37 SDK packages
-        shell: bash
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          set -euo pipefail
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f | sort -V | tail -n 1)"
-          test -x "$SDKMANAGER"
-          "$SDKMANAGER" --licenses <<< "$(printf 'y\n%.0s' {1..100})" >/dev/null
-          "$SDKMANAGER" --install "platforms;android-37" "build-tools;37.0.0" "platform-tools"
-
       - name: Validate and apply Nothing core patch
         shell: bash
         run: |

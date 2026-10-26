@@ -1,0 +1,106 @@
+--- a/build.gradle
++++ b/build.gradle
+@@ -139,7 +139,7 @@
+         || ciRef.endsWith("-stable"))
+ final def devReleaseName = ciBuild ? "Dev.(#${ciRunNumber})" : "Dev.(${buildCommit})"
+
+-final def version = "16"
++final def version = "16.1-Nothing"
+ final def releaseName = "Beta 1"
+ final def versionDisplayName = "${version}.${isReleaseBuild ? releaseName : devReleaseName}"
+ final def majorVersion = versionDisplayName.split("\\.")[0]
+@@ -154,7 +154,7 @@
+          * Lawnchair Launcher 16.0 Beta 1.0
+          * see https://docs.lawnchair.app/developers/standards/development-workflow#versioning-scheme
+          */
+-        versionCode 16_00_02_01_00
++        versionCode 16_00_02_01_01
+         versionName "${versionDisplayName}"
+         buildConfigField "String", "VERSION_DISPLAY_NAME", "\"${versionDisplayName}\""
+         buildConfigField "String", "MAJOR_VERSION", "\"${majorVersion}\""
+@@ -227,7 +227,7 @@
+ 
+         debug {
+             applicationIdSuffix ".debug"
+-            resValue("string", "derived_app_name", "Lawnchair (Debug)")
++            resValue("string", "derived_app_name", "Nothing OS 5 (Debug)")
+ 
+             manifestPlaceholders.quickstepMinSdk = "0"
+             manifestPlaceholders.quickstepMaxSdk = "100000"
+@@ -236,7 +236,7 @@
+         }
+ 
+         release {
+-            resValue("string", "derived_app_name", "Lawnchair")
++            resValue("string", "derived_app_name", "Nothing OS 5")
+             minifyEnabled true
+             shrinkResources true
+             pseudoLocalesEnabled false
+@@ -282,6 +282,12 @@
+             isDefault true
+         }
+ 
++        // Nothing OS 5 distribution flavor: Lawnchair/Launcher3 core with Nothing branding.
++        nothing {
++            applicationId "com.example.nothinglauncher"
++            dimension "channel"
++        }
++
+         configureEach {
+             resValue("string", "launcher_component", "${applicationId}/app.lawnchair.LawnchairLauncher")
+         }
+--- a/lawnchair/src/app/lawnchair/preferences/PreferenceManager.kt
++++ b/lawnchair/src/app/lawnchair/preferences/PreferenceManager.kt
+@@ -169,13 +169,13 @@
+     val hotseatQsbCornerRadius = FloatPref("pref_hotseatQsbCornerRadius", 1F, recreate)
+     val hotseatQsbAlpha = IntPref("pref_searchHotseatTranparency", 100, recreate)
+     val hotseatQsbStrokeWidth = FloatPref("pref_searchStrokeWidth", 0F, recreate)
+-    val hotseatBG = BoolPref("pref_hotseatBG", false, recreate)
++    val hotseatBG = BoolPref("pref_hotseatBG", true, recreate)
+     val hotseatBGHorizontalInsetLeft = IntPref("pref_hotseatBGHRinsetLeft", 0, recreate)
+     val hotseatBGVerticalInsetTop = IntPref("pref_hotseatBGVRinsetTop", 0, recreate)
+     val hotseatBGHorizontalInsetRight = IntPref("pref_hotseatBGHRinsetRight", 0, recreate)
+     val hotseatBGVerticalInsetBottom = IntPref("pref_hotseatBGVRinsetBottom", 0, recreate)
+
+-    val hotseatBGAlpha = IntPref("pref_hotseatBGTransparency", 100, recreate)
++    val hotseatBGAlpha = IntPref("pref_hotseatBGTransparency", 68, recreate)
+
+     val enableWallpaperBlur = BoolPref("pref_enableWallpaperBlur", false, recreate)
+     val wallpaperBlur = IntPref("pref_wallpaperBlur", 25, recreate)
+@@ -229,12 +229,18 @@
+                     hotseatColumns.set(gridState.hotseatCount)
+                 }
+             }
++            // Apply the Nothing dock preset once for existing v2 installs without
++            // resetting users' preferences on later launches.
++            if (oldVersion in 2 until 3) {
++                hotseatBG.set(true)
++                hotseatBGAlpha.set(68)
++            }
+         }
+         normalizeVibrationFeedbackLevel()
+     }
+
+     companion object {
+-        private const val CURRENT_VERSION = 2
++        private const val CURRENT_VERSION = 3
+
+         @JvmField
+         val INSTANCE = DaggerSingletonObject(LauncherAppComponent::getPreferenceManager)
+--- a/lawnchair/res/values/colors.xml
++++ b/lawnchair/res/values/colors.xml
+@@ -17,7 +17,7 @@
+   -->
+
+ <resources>
+-    <color name="accent_light">@color/system_accent1_500</color>
+-    <color name="accent_dark">@color/system_accent1_200</color>
++    <color name="accent_light">#FFD71920</color>
++    <color name="accent_dark">#FFFF3B30</color>
+     <color name="dark_drawer_text_color">#FFFFFFFF</color>
+     <color name="light_drawer_text_color">#DE000000</color>
+--- a/lawnchair/AndroidManifest.xml
++++ b/lawnchair/AndroidManifest.xml
+@@ -47 +47 @@
+-    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk" />
++    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk,com.kieronquinn.app.smartspacer.sdk.client" />

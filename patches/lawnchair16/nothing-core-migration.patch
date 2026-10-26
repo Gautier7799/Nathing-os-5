@@ -101,7 +101,7 @@
      <color name="light_drawer_text_color">#DE000000</color>
 --- a/lawnchair/AndroidManifest.xml
 +++ b/lawnchair/AndroidManifest.xml
-@@ -44,4 +44,4 @@
+@@ -44,5 +44,5 @@
      <!-- Support non-cellular enabled devices -->
      <uses-feature android:name="android.hardware.telephony" android:required="false" />
  

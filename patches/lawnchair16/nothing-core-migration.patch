@@ -99,4 +99,10 @@
 +    <color name="accent_dark">#FFFF3B30</color>
      <color name="dark_drawer_text_color">#FFFFFFFF</color>
      <color name="light_drawer_text_color">#DE000000</color>
-
+--- a/lawnchair/AndroidManifest.xml
++++ b/lawnchair/AndroidManifest.xml
+@@ -44,7 +44,7 @@
+     <!-- Smartspacer's SDK client is only enabled on Android 10+ by SmartspaceMode;
+          override its declared minSdk so the launcher itself can still install on API 26+. -->
+-    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk" />
++    <uses-sdk tools:overrideLibrary="com.kieronquinn.app.smartspacer.sdk,com.kieronquinn.app.smartspacer.sdk.client" />

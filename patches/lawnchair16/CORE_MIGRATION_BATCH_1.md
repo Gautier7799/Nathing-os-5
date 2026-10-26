@@ -6,7 +6,7 @@ This patch targets the separately supplied `lawnchair-16-dev.zip` tree. It does 
 
 - Add a dedicated `nothing` channel flavor with application ID `com.example.nothinglauncher` so it can replace the existing prototype package in a later controlled cutover.
 - Brand debug/release app labels as `Nothing OS 5`.
-- Set the existing Lawnchair Dock/Hotseat background default to enabled with 68% alpha.
+- Apply Nothing red accents to the settings theme in light/dark mode.\n- Set the existing Lawnchair Dock/Hotseat background default to enabled with 68% alpha.
 - Advance preference schema from 2 to 3 and migrate existing v2 installs once, without resetting settings on every launch.
 - Increment the source version to `16.1-Nothing` and bump versionCode.
 
